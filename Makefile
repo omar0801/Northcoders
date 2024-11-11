@@ -67,7 +67,7 @@ security-test:
 run-black:
 #	$(call execute_in_env, black  ./src/*.py ./test/*.py)
 
-	$(call execute_in_env, black  ./*.py ./*.py)
+	$(call execute_in_env, black */*.py)
 
 ## Run the unit tests
 unit-test:
