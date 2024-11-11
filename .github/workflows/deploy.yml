@@ -18,13 +18,23 @@ jobs:
         with:
           python-version: '3.12'
               
+    
       - name: Create-Environment
         run: make create-environment
       - name: Install Modules
         run: make dev-setup
+
+      - name: safety check
+        uses: safety/safety@2.3.4
+        with:
+          api-key: ${{secrets.SAFETY_API_KEY}}
+
       - name: run-all-checks
         run: make run-checks
+      
 
+
+      
 
   deploy-terraform:
     # if: false # this will cause the job to be skipped - delete to enable 
