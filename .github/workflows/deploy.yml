@@ -25,7 +25,7 @@ jobs:
         run: make dev-setup
 
       - name: safety check
-        uses: safety/safety@2.3.4
+        uses: pyupio/safety-action@v1
         with:
           api-key: ${{secrets.SAFETY_API_KEY}}
 
