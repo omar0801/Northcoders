@@ -73,7 +73,7 @@ run-black:
 
 ## Run the unit tests
 unit-test:
-	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest -vv)
+##	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest -vv) ## Enable this line when we have tests to run
 
 ## Run all checks
 run-checks: security-test run-black unit-test
