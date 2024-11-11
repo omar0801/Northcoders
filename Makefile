@@ -65,9 +65,8 @@ security-test:
 
 ## Run the black code check
 run-black:
-#	$(call execute_in_env, black  ./src/*.py ./test/*.py)
+#	$(call execute_in_env, black  ./src/*.py ./test/*.py) ## Enabled when files are in paths 
 
-	$(call execute_in_env, black */*.py)
 
 ## Run the unit tests
 unit-test:
