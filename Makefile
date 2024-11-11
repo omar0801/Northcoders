@@ -35,11 +35,14 @@ endef
 
 ## Build the environment requirements
 requirements: create-environment
-	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
+##	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
 
 ################################################################################################################
 # Set Up
 ## Install bandit
+setupreq:
+	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
+
 bandit:
 	$(call execute_in_env, $(PIP) install bandit)
 
@@ -53,7 +56,7 @@ black:
 
 
 ## Set up dev requirements (bandit, safety, black)
-dev-setup: bandit safety black
+dev-setup: setupreq bandit safety black 
 ## $(call execute_in_env, $(PIP) install -r ./dev-requirements.txt)
 
 # Build / Run
