@@ -60,3 +60,56 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_policy_attachment" {
   role = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.cloudwatch_policy.arn
 }
+
+resource "aws_iam_role" "iam_for_sfn" {
+  name_prefix        = "role-for-sfn-"
+  assume_role_policy = <<EOF
+{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "sts:AssumeRole"
+                ],
+                "Principal": {
+                    "Service": [
+                        "states.amazonaws.com",
+                        "events.amazonaws.com",
+                        "scheduler.amazonaws.com"
+                    ]
+                }
+            }
+        ]
+    }
+EOF
+}
+
+
+resource "aws_iam_policy_attachment" "sfn_lambda_execution" {
+  name       = "sfn_lambda_execution_attachment"
+  roles      = [aws_iam_role.iam_for_sfn.name]
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaRole"
+}
+
+resource "aws_iam_role_policy" "eventbridge_sfn_policy" {
+    name = "eventbridge_sfn_policy"
+    role = aws_iam_role.iam_for_sfn.name
+
+    policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "states:StartExecution"
+            ],
+            "Resource": [
+                "${aws_sfn_state_machine.sfn_state_machine.arn}"
+            ]
+        }
+    ]
+}
+EOF
+}

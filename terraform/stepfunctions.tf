@@ -9,7 +9,7 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
   "States": {
     "HelloWorld": {
       "Type": "Task",
-      "Resource": "${aws_lambda_function.lambda.arn}",
+      "Resource": "${aws_lambda_function.dummy_lambda.arn}",
       "End": true
     }
   }
