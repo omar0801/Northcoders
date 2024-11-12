@@ -1,3 +1,6 @@
+venv
+.env
+data
 **/serverless-output.*
 **/.DS_Store
 temp/
@@ -16,3 +19,4 @@ venv/
 *.zip
 **/.terraform*
 *.tfstate*
+
