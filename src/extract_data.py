@@ -18,6 +18,28 @@ tables = [
     "transaction"
 ]
 
+def create_s3_bucket(bucket_prefix, client):
+
+    str_timestamp = datetime.now().isoformat()
+    bucket_name = bucket_prefix + str_timestamp
+
+    #format bucket name
+    bucket_name = bucket_name.lower()
+    bucket_name = bucket_name.replace(':', '')
+    bucket_name = bucket_name.replace('.', '')
+
+    try:
+        client.create_bucket(
+            Bucket=bucket_name,
+            CreateBucketConfiguration = {
+                    'LocationConstraint': 'eu-west-2'
+            }
+            )
+        return bucket_name
+    except Exception:
+        return 'An error has occured' # To be replaced with logger.log['CRITICAL']
+        exit()
+
 def fetch_data_from_table(conn, table_name):
     query = f"SELECT * FROM {table_name};"
     
