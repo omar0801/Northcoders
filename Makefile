@@ -33,10 +33,6 @@ define execute_in_env
 	$(ACTIVATE_ENV) && $1
 endef
 
-## Build the environment requirements
-requirements: create-environment
-##	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
-
 ################################################################################################################
 # Set Up
 ## Install bandit
@@ -57,7 +53,6 @@ black:
 
 ## Set up dev requirements (bandit, safety, black)
 dev-setup: setupreq bandit safety black 
-## $(call execute_in_env, $(PIP) install -r ./dev-requirements.txt)
 
 # Build / Run
 
