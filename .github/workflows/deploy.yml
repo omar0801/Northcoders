@@ -1,0 +1,73 @@
+name: de-neural-de-normalisers
+
+on:
+  push:
+    branches:
+      - cicd
+
+jobs:
+  run-tests:
+    # if: false # this will cause the job to be skipped - delete to enable 
+    name: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+              
+    
+      - name: Create-Environment
+        run: make create-environment
+      - name: Install Modules
+        run: make dev-setup
+
+      - name: safety check
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{secrets.SAFETY_API_KEY}}
+
+      - name: run-all-checks
+        run: make run-checks
+      
+
+
+      
+
+  deploy-terraform:
+    # if: false # this will cause the job to be skipped - delete to enable 
+    name: deploy-terraform
+    runs-on: ubuntu-latest
+    environment: development
+    needs: run-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credential
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Initi
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform plan
+        working-directory: terraform
+        run: terraform plan
+
+      - name: Terraform apply
+        working-directory: terraform
+        run: terraform apply -auto-approve
+
+
+      
+
