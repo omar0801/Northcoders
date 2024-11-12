@@ -33,9 +33,9 @@ define execute_in_env
 	$(ACTIVATE_ENV) && $1
 endef
 
-## Build the environment requirements
-requirements: create-environment
-##	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
+# ## Build the environment requirements
+# requirements: create-environment
+# ##	$(call execute_in_env, $(PIP) install -r ./requirements.txt)
 
 ################################################################################################################
 # Set Up
