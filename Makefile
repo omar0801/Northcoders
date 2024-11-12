@@ -4,7 +4,7 @@
 #
 #################################################################################
 
-PROJECT_NAME = de-neural-de-normalisers
+PROJECT_NAME = de-neural-de-normaliserss
 REGION = eu-west-2
 PYTHON_INTERPRETER = python
 WD=$(shell pwd)
