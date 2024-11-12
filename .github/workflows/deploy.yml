@@ -3,7 +3,7 @@ name: de-neural-de-normalisers
 on:
   push:
     branches:
-      - cicd
+      - main
 
 jobs:
   run-tests:
@@ -56,7 +56,7 @@ jobs:
       - name: Terraform Setup
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Initi
+      - name: Terraform Init
         working-directory: terraform
         run: terraform init
 
