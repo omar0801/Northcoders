@@ -30,6 +30,12 @@ jobs:
           api-key: ${{secrets.SAFETY_API_KEY}}
 
       - name: run-all-checks
+        env: 
+          PG_DATABASE: ${{secrets.PG_DATABASE}}
+          PG_HOST: ${{secrets.PG_HOST}}
+          PG_PASSWORD: ${{secrets.PG_PASSWORD}}
+          PG_PORT: ${{secrets.PG_PORT}}
+          PG_USER: ${{secrets.PG_USER}}
         run: make run-checks
       
 
