@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "ingestion-bucket" {
-  bucket_prefix = "ingestion-bucket"
+  bucket = "ingestion-bucket-neural-normalisers"
 }
 
 resource "aws_s3_bucket" "lambda_code_bucket" {

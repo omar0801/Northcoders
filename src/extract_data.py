@@ -66,18 +66,32 @@ def save_to_json(data, filename):
     with open(filepath, "w") as f:
         json.dump(data, f, indent=4)
     return f"File '{filename}' has been saved successfully in the 'data' directory."
-        
+
+def save_to_s3(data, bucket_name, filename, client):
+    data_JSON = json.dumps(data)
+    client.put_object(
+        Bucket=bucket_name,
+        Body=data_JSON,
+        Key=filename
+    )
+
 def main(fetch_func=fetch_data_from_table, save_func=save_to_json):
     conn = connect_to_db()
-    messages = [] 
+    messages = []
+    str_timestamp = datetime.now('YYYY-MM-DD HH:MM').isoformat()
+    client = boto3.client('s3')
     try:
         for table in tables:
             messages.append(f"Extracting data from {table}...")
             data = fetch_func(conn, table)
-            json_filename = f"{table}.json"
-            save_message = save_func(data, json_filename)
-            messages.append(save_message)
-            messages.append(f"Data from {table} saved to {json_filename}.")
+            json_filename = f"{str_timestamp}/{table}.json"
+            # save_message = save_func(data, json_filename)
+            # messages.append(save_message)
+            # messages.append(f"Data from {table} saved to {json_filename}.")
+            
+            save_to_s3(data, 'ingestion-bucket-neural-normalisers', json_filename, client)
+
+
     finally:
         close_db_connection(conn)
         messages.append("Database connection closed.")
