@@ -1,8 +1,11 @@
-from src.extract_data import fetch_data_from_table,save_to_json,main
+from src.extract_data import fetch_data_from_table,save_to_json,main, create_s3_bucket
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import patch , MagicMock
 import pytest
+from moto import mock_aws
+import boto3
+from pprint import pprint
 
 class MockConnection:
     def run(self, query):
@@ -101,3 +104,66 @@ class TestMain:
             assert messages[0] == f"Extracting data from {test_tables[0]}..."
             assert messages[1] == "Mock save successful"
             assert messages[-1] == "Database connection closed."
+
+@pytest.fixture()
+def s3_mock():
+    with mock_aws():
+        s3 = boto3.client('s3')
+        yield s3
+
+class TestCreateS3():
+    #creates bucket - bucket exists in mock_aws
+    #can create two buckets with same prefix
+    #returned bucket name is correct
+    #will modify prefix containing capital
+    #will modify prefix containing '.' or ':'
+    #would raise exception if invalid prefix given e.g. contains question mark
+
+
+    def test_creates_bucket(self, s3_mock):
+        bucket_prefix = 'ingestion-bucket-'
+        create_s3_bucket(bucket_prefix, s3_mock)
+        response = s3_mock.list_buckets(Prefix=bucket_prefix)
+        assert len(response['Buckets']) == 1
+
+    def test_creates_two_buckets_with_same_prefix(self, s3_mock):
+        bucket_prefix = 'ingestion-bucket-'
+        create_s3_bucket(bucket_prefix, s3_mock)
+        create_s3_bucket(bucket_prefix, s3_mock)
+        response = s3_mock.list_buckets(Prefix=bucket_prefix)
+        assert len(response['Buckets']) == 2
+
+
+    def test_capitals_are_corrected_in_prefix(self, s3_mock):
+        bucket_prefix = 'Ingestion-bucket-'
+        create_s3_bucket(bucket_prefix, s3_mock)
+
+        response = s3_mock.list_buckets(Prefix=bucket_prefix) #case insensitive
+        assert response['Buckets'][0]['Name'][0:17] == 'ingestion-bucket-'
+
+    def test_full_stops_removed_from_prefix(self, s3_mock):
+        bucket_prefix = 'i.ngestion-bucket-'
+        create_s3_bucket(bucket_prefix, s3_mock)
+
+        response = s3_mock.list_buckets(Prefix=bucket_prefix)
+        assert response['Buckets'][0]['Name'][0:17] == 'ingestion-bucket-'
+
+    def test_colon_removed_from_prefix(self, s3_mock):
+        bucket_prefix = 'i:ngestion-bucket-'
+        create_s3_bucket(bucket_prefix, s3_mock)
+
+        response = s3_mock.list_buckets(Prefix=bucket_prefix)
+        assert response['Buckets'][0]['Name'][0:17] == 'ingestion-bucket-'
+
+    def test_returned_bucket_name_exists(self, s3_mock):
+        bucket_prefix = 'Ingestion-bucket-'
+        bucket_name = create_s3_bucket(bucket_prefix, s3_mock)
+
+        response = s3_mock.list_buckets()
+        assert response['Buckets'][0]['Name'] == bucket_name
+
+    def test_returns_error_if_invalid_prefix_given(self, s3_mock):
+        bucket_prefix = '?Ingestion-bucket-'
+        response = create_s3_bucket(bucket_prefix, s3_mock)
+
+        assert response == 'An error has occured'
