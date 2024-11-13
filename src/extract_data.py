@@ -1,5 +1,5 @@
 import json
-from src.connection import connect_to_db, close_db_connection
+from connection import connect_to_db, close_db_connection
 from datetime import datetime
 from decimal import Decimal
 import os
