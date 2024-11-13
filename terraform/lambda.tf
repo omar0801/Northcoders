@@ -24,7 +24,7 @@ resource "aws_lambda_function" "dummy_lambda" {
   function_name = "extract_data"
   handler = "extract_data.main"
   runtime = "python3.12"
-  timeout = 20
+  timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.lambda_code.key
   role = aws_iam_role.lambda_role.arn
