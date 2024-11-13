@@ -23,3 +23,9 @@ def lambda_handler(event, context):
             "status": "error",
             "message": "Object does not exist"
         }
+    except json.JSONDecodeError as e:
+        logger.error("Failed to decode JSON: %s", e)
+        return {
+            "status": "error",
+            "message": "Invalid JSON format"
+        }
