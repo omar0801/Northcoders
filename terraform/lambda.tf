@@ -20,7 +20,7 @@ resource "aws_lambda_layer_version" "project_layer" {
   
 }
 
-resource "aws_lambda_function" "dummy_lambda" {
+resource "aws_lambda_function" "extract_data" {
   function_name = "extract_data"
   handler = "extract_data.main"
   runtime = "python3.12"
@@ -31,11 +31,11 @@ resource "aws_lambda_function" "dummy_lambda" {
   layers = [aws_lambda_layer_version.project_layer.arn]
   environment {
     variables = {
-      PG_HOST=TF_PG_HOST
-      PG_PORT=TF_PG_PORT
-      PG_DATABASE=TF_PG_DATABASE
-      PG_USER=TF_PG_USER
-      PG_PASSWORD=TF_PG_PASSWORD
+      PG_HOST=TF_VAR_PG_HOST
+      PG_PORT=TF_VAR_PG_PORT
+      PG_DATABASE=TF_VAR_PG_DATABASE
+      PG_USER=TF_VAR_PG_USER
+      PG_PASSWORD=TF_VAR_PG_PASSWORD
     }
   }
 }
