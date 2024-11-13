@@ -61,12 +61,6 @@ jobs:
 
       - name: Terraform Setup
         uses: hashicorp/setup-terraform@v3
-        with:
-          TF_VAR_PG_DATABASE: ${{secrets.PG_DATABASE}}
-          TF_VAR_PG_HOST: ${{secrets.PG_HOST}}
-          TF_VAR_PG_PASSWORD: ${{secrets.PG_PASSWORD}}
-          TF_VAR_PG_PORT: ${{secrets.PG_PORT}}
-          TF_VAR_PG_USER: ${{secrets.PG_USER}}
 
       - name: Terraform Init
         working-directory: terraform
