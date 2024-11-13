@@ -3,6 +3,7 @@ from src.connection import connect_to_db, close_db_connection
 from datetime import datetime
 from decimal import Decimal
 import os
+import boto3
 
 tables = [
     "counterparty",
@@ -75,21 +76,19 @@ def save_to_s3(data, bucket_name, filename, client):
         Key=filename
     )
 
-def main(fetch_func=fetch_data_from_table, save_func=save_to_json):
+def main(fetch_func=fetch_data_from_table, save_func=save_to_s3):
     conn = connect_to_db()
     messages = []
-    str_timestamp = datetime.now('YYYY-MM-DD HH:MM').isoformat()
+    str_timestamp = datetime.now().isoformat()
     client = boto3.client('s3')
     try:
         for table in tables:
             messages.append(f"Extracting data from {table}...")
             data = fetch_func(conn, table)
             json_filename = f"{str_timestamp}/{table}.json"
-            # save_message = save_func(data, json_filename)
-            # messages.append(save_message)
-            # messages.append(f"Data from {table} saved to {json_filename}.")
             
-            save_to_s3(data, 'ingestion-bucket-neural-normalisers', json_filename, client)
+            save_func(data, 'ingestion-bucket-neural-normalisers', json_filename, client)
+            messages.append("Mock save successful")
 
 
     finally:

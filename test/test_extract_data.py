@@ -99,6 +99,8 @@ class TestMain:
             messages = main(fetch_func=mock_fetch, save_func=mock_save)
             mock_connect.assert_called_once()
             mock_close_db.assert_called_once_with(mock_connect.return_value)
+
+            pprint(messages)
         
             assert mock_fetch.call_count == len(test_tables)
             assert mock_save.call_count == len(test_tables)
