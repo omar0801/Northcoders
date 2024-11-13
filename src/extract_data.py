@@ -76,7 +76,7 @@ def save_to_s3(data, bucket_name, filename, client):
         Key=filename
     )
 
-def main(fetch_func=fetch_data_from_table, save_func=save_to_s3):
+def main(event, context, fetch_func=fetch_data_from_table, save_func=save_to_s3):
     conn = connect_to_db()
     messages = []
     str_timestamp = datetime.now().isoformat()
@@ -87,7 +87,7 @@ def main(fetch_func=fetch_data_from_table, save_func=save_to_s3):
             data = fetch_func(conn, table)
             json_filename = f"{str_timestamp}/{table}.json"
             
-            save_func(data, 'ingestion-bucket-neural-normalisers', json_filename, client)
+            save_func(data, 'ingestion-bucket-neural-normalisers-new', json_filename, client)
             messages.append("Mock save successful")
 
 
@@ -95,6 +95,3 @@ def main(fetch_func=fetch_data_from_table, save_func=save_to_s3):
         close_db_connection(conn)
         messages.append("Database connection closed.")
     return messages
-
-if __name__ == "__main__":
-    main()
