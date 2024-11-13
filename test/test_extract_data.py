@@ -1,4 +1,4 @@
-from src.extract_data import fetch_data_from_table,save_to_json,main, create_s3_bucket
+from src.extract_data import fetch_data_from_table,save_to_json,main, create_s3_bucket, save_to_s3
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import patch , MagicMock
@@ -6,6 +6,7 @@ import pytest
 from moto import mock_aws
 import boto3
 from pprint import pprint
+import json
 
 class MockConnection:
     def run(self, query):
@@ -98,6 +99,8 @@ class TestMain:
             messages = main(fetch_func=mock_fetch, save_func=mock_save)
             mock_connect.assert_called_once()
             mock_close_db.assert_called_once_with(mock_connect.return_value)
+
+            pprint(messages)
         
             assert mock_fetch.call_count == len(test_tables)
             assert mock_save.call_count == len(test_tables)
@@ -167,3 +170,39 @@ class TestCreateS3():
         response = create_s3_bucket(bucket_prefix, s3_mock)
 
         assert response == 'An error has occured'
+
+
+expected_data = [
+            {
+                "currency_id": 1,
+                "currency_code": "GBP",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 100.0
+            },
+            {
+                "currency_id": 2,
+                "currency_code": "USD",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 200.0
+            }
+        ]
+
+class TestPutObject():
+
+    def test_creates_object(self, s3_mock):
+        bucket_name = create_s3_bucket('test_bucket', s3_mock)
+        save_to_s3(expected_data, bucket_name, 'test_object', s3_mock)
+
+        object_list = s3_mock.list_objects_v2(Bucket=bucket_name)
+        assert object_list['Contents'][0]['Key'] == 'test_object'
+
+    def test_object_body_as_expected(self, s3_mock):
+        bucket_name = create_s3_bucket('test_bucket', s3_mock)
+        save_to_s3(expected_data, bucket_name, 'test_object', s3_mock)
+
+        result = s3_mock.get_object(
+            Bucket=bucket_name,
+            Key='test_object'
+        )['Body'].read()
+
+        assert json.loads(result) == expected_data
