@@ -6,7 +6,7 @@ terraform {
     }
   }
   backend "s3" {
-    bucket = "neural-normalisers-state-bucket"
+    bucket = "neural-normalisers-state-bucket-new"
     key = "terraform.tfstate"
     region = "eu-west-2"
   }
