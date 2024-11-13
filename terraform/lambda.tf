@@ -14,7 +14,7 @@ data "archive_file" "layer" {
 
 resource "aws_lambda_layer_version" "project_layer" {
   layer_name = "project_layer"
-  compatible_runtimes = "python3.12"
+  compatible_runtimes = ["python3.12"]
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.layer.key
   
