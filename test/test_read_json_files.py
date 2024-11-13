@@ -1,5 +1,5 @@
 from moto import mock_aws
-import json, pytest, boto3
+import json, pytest, boto3, logging
 from src.read_json_files import lambda_handler
 
 @pytest.fixture()
@@ -12,11 +12,7 @@ def s3_mock():
                                 'LocationConstraint': 'eu-west-2'}
                          )
         yield s3
-        
-def test_function_returns_dict(s3_mock):
-    result = lambda_handler({}, {})
-    assert isinstance(result, dict)
- 
+         
 def generate_s3_event(bucket_name, object_key):
     return {
         'Records': [
@@ -30,13 +26,24 @@ def generate_s3_event(bucket_name, object_key):
         }
     
     
-def test_function_success(s3_mock):
+def test_function_success(s3_mock, caplog):
     s3_mock.put_object(
     Bucket='test-bucket',
     Key='test.json',
     Body=json.dumps({'test': 'test_value'})
     )
     event = generate_s3_event('test-bucket', 'test.json')
-    
-    response = lambda_handler(event, None)
+    with caplog.at_level(logging.INFO):
+        response = lambda_handler(event, None)
     assert response['status'] == 'success'
+    assert response['data'] == {'test': 'test_value'}
+    assert "Lambda handler invoked with event" in caplog.text
+    assert "Fetching object from S3" in caplog.text
+    assert "Successfully retrieved and parsed object from S3" in caplog.text
+    
+def test_object_not_found(s3_mock, caplog):
+    event = generate_s3_event('test-bucket', 'non-existent.json')
+    with caplog.at_level(logging.INFO):
+        response = lambda_handler(event, None)
+    assert response['status'] == 'error'
+    assert response['message'] == 'Object does not exist'
