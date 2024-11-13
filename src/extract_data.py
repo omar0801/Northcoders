@@ -3,8 +3,7 @@ from decimal import Decimal
 from datetime import datetime
 import os
 import boto3
-import pg8000
-from dotenv import load_dotenv
+import pg8000.native
 
 tables = [
     "counterparty",
@@ -20,7 +19,6 @@ tables = [
     "transaction"
 ]
 
-load_dotenv(override=True)
 def connect_to_db():
     return pg8000.native.Connection(
         user=os.getenv("PG_USER"),

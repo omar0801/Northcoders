@@ -29,4 +29,13 @@ resource "aws_lambda_function" "dummy_lambda" {
   s3_key = aws_s3_object.lambda_code.key
   role = aws_iam_role.lambda_role.arn
   layers = [aws_lambda_layer_version.project_layer.arn]
+  environment {
+    variables = {
+      PG_HOST=TF_PG_HOST
+      PG_PORT=TF_PG_PORT
+      PG_DATABASE=TF_PG_DATABASE
+      PG_USER=TF_PG_USER
+      PG_PASSWORD=TF_PG_PASSWORD
+    }
+  }
 }
