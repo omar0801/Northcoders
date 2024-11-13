@@ -31,11 +31,11 @@ resource "aws_lambda_function" "extract_data" {
   layers = [aws_lambda_layer_version.project_layer.arn]
   environment {
     variables = {
-      PG_HOST=TF_VAR_PG_HOST
-      PG_PORT=TF_VAR_PG_PORT
-      PG_DATABASE=TF_VAR_PG_DATABASE
-      PG_USER=TF_VAR_PG_USER
-      PG_PASSWORD=TF_VAR_PG_PASSWORD
+      PG_HOST=var.TF_VAR_PG_HOST
+      PG_PORT=var.TF_VAR_PG_PORT
+      PG_DATABASE=var.TF_VAR_PG_DATABASE
+      PG_USER=var.TF_VAR_PG_USER
+      PG_PASSWORD=var.TF_VAR_PG_PASSWORD
     }
   }
 }
