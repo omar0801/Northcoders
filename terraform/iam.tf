@@ -23,7 +23,7 @@ resource "aws_iam_role" "lambda_role" {
 data "aws_iam_policy_document" "s3_document" {
   statement {
     actions = ["s3:GetObject", "s3:PutObject"]
-    resources = ["${aws_s3_bucket.ingestion-bucket.arn}"]
+    resources = ["${aws_s3_bucket.ingestion-bucket.arn}/*"]
     }
 }
 
