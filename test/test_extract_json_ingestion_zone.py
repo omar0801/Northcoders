@@ -1,6 +1,29 @@
 from moto import mock_aws
 import json, pytest, boto3, logging
-from src.extract_json_ingestion_zone import lambda_handler
+from src.extract_json_ingestion_zone import *
+from pg8000.native import Connection
+from unittest.mock import  patch
+
+
+
+tables = [
+    "counterparty",
+    "currency",
+    "department",
+    "design",
+    "staff",
+    "sales_order",
+    "address",
+    "payment",
+    "purchase_order",
+    "payment_type",
+    "transaction"
+]
+
+def test_connection_to_db():
+    conn = connect_to_db()
+    assert isinstance(conn, Connection)
+    close_db_connection(conn)
 
 @pytest.fixture()
 def s3_mock():
@@ -12,6 +35,37 @@ def s3_mock():
                         'LocationConstraint': 'eu-west-2'}
                         )
         yield s3
+
+@pytest.fixture()
+def s3_mock_with_objects(s3_mock):
+    for i in range(10):
+        for table in tables:
+            fake_timestamp = f'2024-11-14T09:27:40.35701{i}/{table}.json'
+            s3_mock.put_object(Bucket='test-bucket',
+                            Body=b'test_content',
+                            Key=fake_timestamp)
+    yield s3_mock
+
+class MockConnection:
+    def run(self, query):
+        return [
+            (1, "GBP", datetime(2022, 11, 3, 14, 20, 49), Decimal("100.0")),
+            (2, "USD", datetime(2022, 11, 3, 14, 20, 49), Decimal("200.0"))
+        ]
+    @property
+    def columns(self):
+        return [
+            {"name": "currency_id"},
+            {"name": "currency_code"},
+            {"name": "created_at"},
+            {"name": "amount"}
+        ]
+
+
+
+@pytest.fixture
+def mock_conn():
+    return MockConnection()
 
 def generate_s3_event(bucket_name, object_key):
     return {
@@ -33,18 +87,16 @@ class TestExtractLambdaHandler:
         Key='test.json',
         Body=json.dumps(content)
         )
-        event = generate_s3_event('test-bucket', 'test.json')
         with caplog.at_level(logging.INFO):
-            response = lambda_handler(event, None)
+            response = fetch_from_s3('test-bucket', 'test.json')
         assert response == content
         assert "Lambda handler invoked with event" in caplog.text
         assert "Fetching object from S3" in caplog.text
         assert "Successfully retrieved and parsed object from S3" in caplog.text
         
     def test_object_not_found(self, s3_mock, caplog):
-        event = generate_s3_event('test-bucket', 'non-existent.json')
         with caplog.at_level(logging.INFO):
-            response = lambda_handler(event, None)
+            response = fetch_from_s3('test-bucket', 'non-existent.json')
         assert "Object not found in S3" in caplog.text
         
     def test_invalid_json_format(self, s3_mock, caplog):
@@ -53,8 +105,157 @@ class TestExtractLambdaHandler:
         Key='test.json',
         Body='Not a json'
         )
-        event = generate_s3_event('test-bucket', 'test.json')
         with caplog.at_level(logging.INFO):
-            response = lambda_handler(event, None)
+            response = fetch_from_s3('test-bucket', 'test.json')
         assert "Failed to decode JSON" in caplog.text
+
+class TestFetchData:
+    def test_fetch_data_from_table(self,mock_conn):
+        table_name = "currency"
+        data = fetch_data_from_table(mock_conn, table_name)
         
+        expected_data = [
+            {
+                "currency_id": 1,
+                "currency_code": "GBP",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 100.0
+            },
+            {
+                "currency_id": 2,
+                "currency_code": "USD",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 200.0
+            }
+        ]
+        assert data == expected_data
+
+    def test_datetime_serialisation(self, mock_conn):
+        data = fetch_data_from_table(mock_conn, "currency")
+        for entry in data:
+            assert isinstance(entry["created_at"], str)
+        
+    def test_decimal_serialisation(self, mock_conn):
+        data = fetch_data_from_table(mock_conn, "currency")
+        for entry in data:
+            assert isinstance(entry["amount"],float)
+
+class TestLambdaHandler:
+    # returns dict - 
+    # has keys db and s3
+    # both db and s3 values are dictionaries
+    # thos dictionaries contain each table name as a key
+    # values of those are lists of dictionaries
+    # these values are correct - mock fetch data to test
+
+    def test_returns_dict(self):
+        result = lambda_handler(None, None)
+        assert isinstance(result, dict)
+
+    def test_returned_dict_has_correct_keys(self):
+        result = lambda_handler(None, None)
+        assert result.get('s3') != None
+        assert result.get('db') != None
+
+    def test_values_are_dict(self):
+        result = lambda_handler(None, None)
+        assert isinstance(result['db'], dict)
+        assert isinstance(result['s3'], dict)
+
+    def test_inner_db_dict_have_correct_keys(self):
+        result = lambda_handler(None, None)
+        for key in result['db'].keys():
+            assert key in tables
+
+    def test_inner_db_dict_values_list_of_dicts(self):
+        result = lambda_handler(None, None)
+        db = result['db']
+        for item_list in db.values():
+            assert isinstance(item_list, list)
+            for item_dict in item_list:
+                assert isinstance(item_dict, dict)
+
+    def test_inner_s3_dict_have_correct_keys(self):
+        result = lambda_handler(None, None)
+        for key in result['s3'].keys():
+            assert key in tables
+
+    def test_inner_s3_dict_values_list_of_dicts(self):
+        result = lambda_handler(None, None)
+        db = result['s3']
+        for item_list in db.values():
+            assert isinstance(item_list, list)
+            for item_dict in item_list:
+                assert isinstance(item_dict, dict)
+
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    def test_db_dict_has_correct_values(self, mock_fetch_data):
+        expected_data = [
+            {
+                "currency_id": 1,
+                "currency_code": "GBP",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 100.0
+            },
+            {
+                "currency_id": 2,
+                "currency_code": "USD",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 200.0
+            }
+        ]
+        mock_fetch_data.return_value = expected_data
+
+        result = lambda_handler(None, None)
+        db = result['db']
+        for item in db.values():
+            assert item == expected_data
+
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
+    def test_s3_dict_has_correct_values(self, mock_fetch_data):
+        expected_data = [
+            {
+                "currency_id": 1,
+                "currency_code": "GBP",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 100.0
+            },
+            {
+                "currency_id": 2,
+                "currency_code": "USD",
+                "created_at": "2022-11-03T14:20:49",
+                "amount": 200.0
+            }
+        ]
+        mock_fetch_data.return_value = expected_data
+
+        result = lambda_handler(None, None)
+        db = result['s3']
+        for item in db.values():
+            assert item == expected_data
+
+class TestGetLatestS3Keys:
+    #returns a list of strings
+    #strings are valid s3 objects - mock
+    #strings returned contain the latest timestamp
+
+    def test_returns_string(self):
+        result = get_latest_s3_keys("ingestion-bucket-neural-normalisers-new")
+        assert isinstance(result, str)
+
+    def test_returned_strings_is_latest_timestamp(self, s3_mock_with_objects):
+        result = get_latest_s3_keys('test-bucket')
+        expected_result = '2024-11-14T09:27:40.357019'
+        assert result == expected_result
+        
+
+
+            
+
+
+
+
+
+
+
+    
