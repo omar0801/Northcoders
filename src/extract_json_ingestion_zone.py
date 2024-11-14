@@ -13,19 +13,9 @@ def lambda_handler(event, context):
         response = s3.get_object(Bucket=bucket, Key=key)
         content = json.loads(response['Body'].read().decode('utf-8'))
         logger.info("Successfully retrieved and parsed object from S3")
-        return {
-                'status': 'success',
-                'data': content
-            }
+        return content
+    
     except s3.exceptions.NoSuchKey:
         logger.error("Object not found in S3: bucket=%s, key=%s", bucket, key)
-        return {
-            "status": "error",
-            "message": "Object does not exist"
-        }
     except json.JSONDecodeError as e:
         logger.error("Failed to decode JSON: %s", e)
-        return {
-            "status": "error",
-            "message": "Invalid JSON format"
-        }

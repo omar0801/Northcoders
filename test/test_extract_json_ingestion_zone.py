@@ -27,16 +27,16 @@ def generate_s3_event(bucket_name, object_key):
     
 class TestExtractLambdaHandler:
     def test_function_success(self, s3_mock, caplog):
+        content = {'test': 'test_value'}
         s3_mock.put_object(
         Bucket='test-bucket',
         Key='test.json',
-        Body=json.dumps({'test': 'test_value'})
+        Body=json.dumps(content)
         )
         event = generate_s3_event('test-bucket', 'test.json')
         with caplog.at_level(logging.INFO):
             response = lambda_handler(event, None)
-        assert response['status'] == 'success'
-        assert response['data'] == {'test': 'test_value'}
+        assert response == content
         assert "Lambda handler invoked with event" in caplog.text
         assert "Fetching object from S3" in caplog.text
         assert "Successfully retrieved and parsed object from S3" in caplog.text
@@ -45,8 +45,6 @@ class TestExtractLambdaHandler:
         event = generate_s3_event('test-bucket', 'non-existent.json')
         with caplog.at_level(logging.INFO):
             response = lambda_handler(event, None)
-        assert response['status'] == 'error'
-        assert response['message'] == 'Object does not exist'
         assert "Object not found in S3" in caplog.text
         
     def test_invalid_json_format(self, s3_mock, caplog):
@@ -58,7 +56,5 @@ class TestExtractLambdaHandler:
         event = generate_s3_event('test-bucket', 'test.json')
         with caplog.at_level(logging.INFO):
             response = lambda_handler(event, None)
-        assert response['status'] == 'error'
-        assert response['message'] == 'Invalid JSON format'
         assert "Failed to decode JSON" in caplog.text
         
