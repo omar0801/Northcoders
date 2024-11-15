@@ -74,16 +74,7 @@ def get_latest_s3_keys(bucket):
     all_objects = s3.list_objects_v2(Bucket=bucket)
     all_key_timestamps = [item['Key'][0:26] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
-
-    # s3_object_names = [f'{latest_timestamp}/{table}.json' for table in tables]
-
     return latest_timestamp
-
-
-
-    # all_keys = []
-    # for item in all_objects['Contents']:
-    #     all_keys.append(item['Key'])
 
 
 def lambda_handler(event, context):
@@ -101,6 +92,4 @@ def lambda_handler(event, context):
 
     return out_dict
 
-pprint.pprint(lambda_handler({},{}))
-# get_latest_s3_keys()
 

@@ -79,7 +79,7 @@ def generate_s3_event(bucket_name, object_key):
             ]
         }
     
-class TestExtractLambdaHandler:
+class TestFetchFromS3:
     def test_function_success(self, s3_mock, caplog):
         content = {'test': 'test_value'}
         s3_mock.put_object(
@@ -140,99 +140,114 @@ class TestFetchData:
         for entry in data:
             assert isinstance(entry["amount"],float)
 
-class TestLambdaHandler:
-    # returns dict - 
-    # has keys db and s3
-    # both db and s3 values are dictionaries
-    # thos dictionaries contain each table name as a key
-    # values of those are lists of dictionaries
-    # these values are correct - mock fetch data to test
 
-    def test_returns_dict(self):
+
+class TestLambdaHandler:
+
+    expected_db_data = [
+        {"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49", "amount": 100.0},
+        {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49", "amount": 200.0}
+    ]
+
+    expected_s3_data = [
+        {"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49", "amount": 100.0},
+        {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49", "amount": 200.0}
+    ]
+
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_returns_dict(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = self.expected_db_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data
+
         result = lambda_handler(None, None)
         assert isinstance(result, dict)
 
-    def test_returned_dict_has_correct_keys(self):
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_returned_dict_has_correct_keys(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = self.expected_db_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data
+
         result = lambda_handler(None, None)
         assert result.get('s3') != None
         assert result.get('db') != None
 
-    def test_values_are_dict(self):
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_values_are_dict(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = self.expected_db_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data
+
         result = lambda_handler(None, None)
         assert isinstance(result['db'], dict)
         assert isinstance(result['s3'], dict)
 
-    def test_inner_db_dict_have_correct_keys(self):
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_inner_db_dict_have_correct_keys(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+    
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = self.expected_db_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data
+
         result = lambda_handler(None, None)
         for key in result['db'].keys():
             assert key in tables
 
-    def test_inner_db_dict_values_list_of_dicts(self):
-        result = lambda_handler(None, None)
-        db = result['db']
-        for item_list in db.values():
-            assert isinstance(item_list, list)
-            for item_dict in item_list:
-                assert isinstance(item_dict, dict)
-
-    def test_inner_s3_dict_have_correct_keys(self):
-        result = lambda_handler(None, None)
-        for key in result['s3'].keys():
-            assert key in tables
-
-    def test_inner_s3_dict_values_list_of_dicts(self):
-        result = lambda_handler(None, None)
-        db = result['s3']
-        for item_list in db.values():
-            assert isinstance(item_list, list)
-            for item_dict in item_list:
-                assert isinstance(item_dict, dict)
-
+    @patch('src.extract_json_ingestion_zone.fetch_from_s3')
     @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
-    def test_db_dict_has_correct_values(self, mock_fetch_data):
-        expected_data = [
-            {
-                "currency_id": 1,
-                "currency_code": "GBP",
-                "created_at": "2022-11-03T14:20:49",
-                "amount": 100.0
-            },
-            {
-                "currency_id": 2,
-                "currency_code": "USD",
-                "created_at": "2022-11-03T14:20:49",
-                "amount": 200.0
-            }
-        ]
-        mock_fetch_data.return_value = expected_data
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_inner_db_dict_values_list_of_dicts(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = self.expected_db_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data
 
         result = lambda_handler(None, None)
         db = result['db']
-        for item in db.values():
-            assert item == expected_data
+        for item_list in db.values():
+            assert isinstance(item_list, list)
+            for item_dict in item_list:
+                assert isinstance(item_dict, dict)
 
     @patch('src.extract_json_ingestion_zone.fetch_from_s3')
-    def test_s3_dict_has_correct_values(self, mock_fetch_data):
-        expected_data = [
-            {
-                "currency_id": 1,
-                "currency_code": "GBP",
-                "created_at": "2022-11-03T14:20:49",
-                "amount": 100.0
-            },
-            {
-                "currency_id": 2,
-                "currency_code": "USD",
-                "created_at": "2022-11-03T14:20:49",
-                "amount": 200.0
-            }
-        ]
-        mock_fetch_data.return_value = expected_data
+    @patch('src.extract_json_ingestion_zone.fetch_data_from_table')
+    @patch('src.extract_json_ingestion_zone.get_latest_s3_keys')
+    @patch('src.extract_json_ingestion_zone.connect_to_db')
+    def test_db_dict_has_correct_values(self, mock_connect_to_db, mock_get_latest_s3_keys, mock_fetch_data_from_table, mock_fetch_from_s3):
+        expected_data = self.expected_db_data
+
+        mock_connect_to_db.return_value = MockConnection()
+        mock_get_latest_s3_keys.return_value = 'latest_timestamp'
+        mock_fetch_data_from_table.return_value = expected_data
+        mock_fetch_from_s3.return_value = self.expected_s3_data 
 
         result = lambda_handler(None, None)
-        db = result['s3']
+        db = result['db']
         for item in db.values():
             assert item == expected_data
+
 
 class TestGetLatestS3Keys:
     #returns a list of strings
@@ -247,15 +262,3 @@ class TestGetLatestS3Keys:
         result = get_latest_s3_keys('test-bucket')
         expected_result = '2024-11-14T09:27:40.357019'
         assert result == expected_result
-        
-
-
-            
-
-
-
-
-
-
-
-    
