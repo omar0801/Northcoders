@@ -1,8 +1,8 @@
 data "archive_file" "lambda_3" {
   type = "zip"
   output_file_mode = "0666"
-  source_file = "${path.module}/../src/write_to_s3.py"
-  output_path = "${path.module}/../src/write_to_s3.zip"
+  source_file = "${path.module}/../src/ingestion.py"
+  output_path = "${path.module}/../src/ingestion.zip"
 }
 
 data "archive_file" "lambda_1" {
@@ -27,9 +27,9 @@ resource "aws_lambda_layer_version" "project_layer" {
   
 }
 
-resource "aws_lambda_function" "write_to_s3" {
-  function_name = "write_to_s3"
-  handler = "write_to_s3.main"
+resource "aws_lambda_function" "ingestion" {
+  function_name = "ingestion"
+  handler = "ingestion.lambda_handler"
   runtime = "python3.12"
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id

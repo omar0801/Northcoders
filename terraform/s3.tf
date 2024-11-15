@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "lambda_code_bucket" {
 resource "aws_s3_object" "write_to_s3_lambda" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
   key = "write_to_s3_lambda"
-  source = "${path.module}/../src/write_to_s3.zip"
+  source = "${path.module}/../src/ingestion.zip"
 }
 
 
