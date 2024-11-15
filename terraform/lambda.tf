@@ -1,14 +1,14 @@
 data "archive_file" "lambda_3" {
   type = "zip"
   output_file_mode = "0666"
-  source_file = "${path.module}/../src/extract_data.py"
+  source_file = "${path.module}/../src/write_to_s3.py"
   output_path = "${path.module}/../src/write_to_s3.zip"
 }
 
 data "archive_file" "lambda_1" {
   type = "zip"
   output_file_mode = "0666"
-  source_file = "${path.module}/../src/extract_json_ingestion_zone.py"
+  source_file = "${path.module}/../src/extract_data.py"
   output_path = "${path.module}/../src/extract_data.zip"
 }
 
@@ -29,7 +29,7 @@ resource "aws_lambda_layer_version" "project_layer" {
 
 resource "aws_lambda_function" "write_to_s3" {
   function_name = "write_to_s3"
-  handler = "extract_data.main"
+  handler = "write_to_s3.main"
   runtime = "python3.12"
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
@@ -49,7 +49,7 @@ resource "aws_lambda_function" "write_to_s3" {
 
 resource "aws_lambda_function" "extract_data" {
   function_name = "extract_data"
-  handler = "extract_json_ingestion_zone.lambda_handler"
+  handler = "extract_data.lambda_handler"
   runtime = "python3.12"
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id

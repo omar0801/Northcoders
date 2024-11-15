@@ -8,14 +8,14 @@ resource "aws_s3_bucket" "lambda_code_bucket" {
 
 resource "aws_s3_object" "write_to_s3_lambda" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
-  key = "lambda_code"
+  key = "write_to_s3_lambda"
   source = "${path.module}/../src/write_to_s3.zip"
 }
 
 
 resource "aws_s3_object" "extract_data_lambda" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
-  key = "lambda_code"
+  key = "extract_data_lambda"
   source = "${path.module}/../src/extract_data.zip"
 }
 
