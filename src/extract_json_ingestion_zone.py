@@ -8,7 +8,7 @@ load_dotenv(override=True)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-s3 = boto3.client('s3')
+
 
 tables = [
     "counterparty",
@@ -70,18 +70,19 @@ def fetch_data_from_table(conn, table_name):
     
     return data
 
-def get_latest_s3_keys(bucket):
-    all_objects = s3.list_objects_v2(Bucket=bucket)
+def get_latest_s3_keys(bucket,s3_client):
+    all_objects = s3_client.list_objects_v2(Bucket=bucket)
     all_key_timestamps = [item['Key'][0:26] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
     return latest_timestamp
 
 
 def lambda_handler(event, context):
+    s3 = boto3.client('s3')
     out_dict = {'db': {}, 's3': {}}
     ingestion_bucket = "ingestion-bucket-neural-normalisers-new"
 
-    latest_timestamp = get_latest_s3_keys(ingestion_bucket)
+    latest_timestamp = get_latest_s3_keys(ingestion_bucket,s3)
 
     conn = connect_to_db()
     for table in tables:

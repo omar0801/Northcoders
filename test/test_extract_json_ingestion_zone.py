@@ -259,6 +259,6 @@ class TestGetLatestS3Keys:
         assert isinstance(result, str)
 
     def test_returned_strings_is_latest_timestamp(self, s3_mock_with_objects):
-        result = get_latest_s3_keys('test-bucket')
+        result = get_latest_s3_keys('test-bucket',s3_mock_with_objects)
         expected_result = '2024-11-14T09:27:40.357019'
         assert result == expected_result
