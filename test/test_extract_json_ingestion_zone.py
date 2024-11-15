@@ -88,7 +88,7 @@ class TestFetchFromS3:
         Body=json.dumps(content)
         )
         with caplog.at_level(logging.INFO):
-            response = fetch_from_s3('test-bucket', 'test.json')
+            response = fetch_from_s3('test-bucket', 'test.json',s3_mock)
         assert response == content
         assert "Lambda handler invoked with event" in caplog.text
         assert "Fetching object from S3" in caplog.text
@@ -96,7 +96,7 @@ class TestFetchFromS3:
         
     def test_object_not_found(self, s3_mock, caplog):
         with caplog.at_level(logging.INFO):
-            response = fetch_from_s3('test-bucket', 'non-existent.json')
+            response = fetch_from_s3('test-bucket', 'non-existent.json',s3_mock)
         assert "Object not found in S3" in caplog.text
         
     def test_invalid_json_format(self, s3_mock, caplog):
@@ -106,7 +106,7 @@ class TestFetchFromS3:
         Body='Not a json'
         )
         with caplog.at_level(logging.INFO):
-            response = fetch_from_s3('test-bucket', 'test.json')
+            response = fetch_from_s3('test-bucket', 'test.json',s3_mock)
         assert "Failed to decode JSON" in caplog.text
 
 class TestFetchData:
@@ -254,8 +254,8 @@ class TestGetLatestS3Keys:
     #strings are valid s3 objects - mock
     #strings returned contain the latest timestamp
 
-    def test_returns_string(self):
-        result = get_latest_s3_keys("ingestion-bucket-neural-normalisers-new")
+    def test_returns_string(self,s3_mock_with_objects):
+        result = get_latest_s3_keys("test-bucket",s3_mock_with_objects)
         assert isinstance(result, str)
 
     def test_returned_strings_is_latest_timestamp(self, s3_mock_with_objects):

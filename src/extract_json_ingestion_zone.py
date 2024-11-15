@@ -36,7 +36,7 @@ def connect_to_db():
 def close_db_connection(conn):
     conn.close()
 
-def fetch_from_s3(bucket, key):
+def fetch_from_s3(bucket, key,s3 ):
     logger.info('Lambda handler invoked with event: %s', json.dumps([bucket, key]))
     try:
         logger.info("Fetching object from S3: bucket=%s, key=%s", bucket, key)
@@ -89,7 +89,7 @@ def lambda_handler(event, context):
         out_dict['db'][table] = fetch_data_from_table(conn, table)
         
         s3_key = f'{latest_timestamp}/{table}.json'
-        out_dict['s3'][table] = fetch_from_s3(ingestion_bucket, s3_key)
+        out_dict['s3'][table] = fetch_from_s3(ingestion_bucket, s3_key, s3)
 
     return out_dict
 
