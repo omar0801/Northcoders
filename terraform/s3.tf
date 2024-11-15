@@ -11,3 +11,9 @@ resource "aws_s3_object" "lambda_code" {
   key = "lambda_code"
   source = "${path.module}/../src/extract_data.zip"
 }
+
+resource "aws_s3_object" "layer" {
+  bucket = aws_s3_bucket.lambda_code_bucket.id
+  key = "layer"
+  source = "${path.module}/../layer.zip"
+}

@@ -1,9 +1,9 @@
 import json
-from src.connection import connect_to_db, close_db_connection
-from datetime import datetime
 from decimal import Decimal
+from datetime import datetime
 import os
 import boto3
+import pg8000.native
 
 tables = [
     "counterparty",
@@ -18,6 +18,18 @@ tables = [
     "payment_type",
     "transaction"
 ]
+
+def connect_to_db():
+    return pg8000.native.Connection(
+        user=os.getenv("PG_USER"),
+        password=os.getenv("PG_PASSWORD"),
+        database=os.getenv("PG_DATABASE"),
+        host=os.getenv("PG_HOST"),
+        port=int(os.getenv("PG_PORT"))
+    )
+
+def close_db_connection(conn):
+    conn.close()
 
 def create_s3_bucket(bucket_prefix, client):
 
