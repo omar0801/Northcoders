@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "ingestion-bucket" {
-  bucket_prefix = "ingestion-bucket"
+  bucket = "ingestion-bucket-neural-normalisers-new"
 }
 
 resource "aws_s3_bucket" "lambda_code_bucket" {
@@ -9,5 +9,11 @@ resource "aws_s3_bucket" "lambda_code_bucket" {
 resource "aws_s3_object" "lambda_code" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
   key = "lambda_code"
-  source = "${path.module}/../src/dummy_lambda.zip"
+  source = "${path.module}/../src/extract_data.zip"
+}
+
+resource "aws_s3_object" "layer" {
+  bucket = aws_s3_bucket.lambda_code_bucket.id
+  key = "layer"
+  source = "${path.module}/../layer.zip"
 }
