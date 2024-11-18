@@ -82,7 +82,7 @@ def check_changes(db_data, s3_data):
     return change_log
 
 
-def main_check_for_changes(event, context, client):
+def main_check_for_changes(event, client):
     db = event['db']
     s3 = event['s3']
 

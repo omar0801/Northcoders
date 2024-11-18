@@ -1,4 +1,4 @@
-from src.compare_changes import check_additions, check_deletions, check_changes, main_check_for_changes
+from src.ingestion import check_additions, check_deletions, check_changes, main_check_for_changes
 import pytest, boto3, json
 from moto import mock_aws
 from unittest.mock import Mock, patch
@@ -431,7 +431,7 @@ def s3_mock():
 
 @pytest.fixture()
 def datetime_mock():
-    with patch('src.compare_changes.datetime') as mock_dt:
+    with patch('src.ingestion.datetime') as mock_dt:
         mock_dt.now.return_value.isoformat.return_value = ('mock_timestamp')
         yield mock_dt
 
@@ -439,7 +439,7 @@ def datetime_mock():
 class TestMainFunc():
 
     def test_check_for_no_changes(self, records, s3_mock, datetime_mock):
-        results = main_check_for_changes(records, {}, s3_mock)
+        results = main_check_for_changes(records, s3_mock)
         assert results == []
 
         s3_contents = s3_mock.list_objects_v2(
@@ -473,7 +473,7 @@ class TestMainFunc():
         "last_updated": "2022-11-03T14:20:49.962000"
     })
         
-        result = main_check_for_changes(records, {}, s3_mock)
+        result = main_check_for_changes(records, s3_mock)
         
         s3_contents = s3_mock.list_objects_v2(
             Bucket='ingestion-bucket-neural-normalisers-new'
@@ -507,7 +507,7 @@ class TestMainFunc():
          
         records['db']['currency'].pop(-1)
         # pp.pprint(records)
-        result = main_check_for_changes(records, {}, s3_mock)
+        result = main_check_for_changes(records, s3_mock)
         
         s3_contents = s3_mock.list_objects_v2(
                 Bucket='ingestion-bucket-neural-normalisers-new'
@@ -538,7 +538,7 @@ class TestMainFunc():
     def test_for_updated_records(self, records, s3_mock, datetime_mock):
          
         records['db']['currency'][0]["currency_code"] = "JPY"
-        result = main_check_for_changes(records, {}, s3_mock)
+        result = main_check_for_changes(records, s3_mock)
         
         s3_contents = s3_mock.list_objects_v2(
                 Bucket='ingestion-bucket-neural-normalisers-new'
@@ -576,7 +576,7 @@ class TestMainFunc():
         records['db']['currency'][0]["currency_code"] = "JPY"
         records['db']['payment'].pop(-1)
 
-        result = main_check_for_changes(records, {}, s3_mock)
+        result = main_check_for_changes(records, s3_mock)
         assert result == ['currency', 'payment']
         
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
@@ -608,7 +608,7 @@ class TestMainFunc():
         "last_updated": "2022-11-03T14:20:49.962000"
         })
         records['db']['currency'].pop(0)
-        result = main_check_for_changes(records, {}, s3_mock)
+        result = main_check_for_changes(records, s3_mock)
         assert result == ['currency']
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
