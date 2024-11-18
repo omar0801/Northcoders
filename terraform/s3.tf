@@ -6,9 +6,16 @@ resource "aws_s3_bucket" "lambda_code_bucket" {
   bucket_prefix = "lambda-code-bucket"
 }
 
-resource "aws_s3_object" "lambda_code" {
+resource "aws_s3_object" "write_to_s3_lambda" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
-  key = "lambda_code"
+  key = "write_to_s3_lambda"
+  source = "${path.module}/../src/ingestion.zip"
+}
+
+
+resource "aws_s3_object" "extract_data_lambda" {
+  bucket = aws_s3_bucket.lambda_code_bucket.id
+  key = "extract_data_lambda"
   source = "${path.module}/../src/extract_data.zip"
 }
 

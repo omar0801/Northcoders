@@ -1,9 +1,12 @@
-import json
-from decimal import Decimal
+import boto3, json, logging, pg8000.native, os, pprint
 from datetime import datetime
-import os
-import boto3
-import pg8000.native
+from decimal import Decimal
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
 
 tables = [
     "counterparty",
@@ -31,27 +34,19 @@ def connect_to_db():
 def close_db_connection(conn):
     conn.close()
 
-def create_s3_bucket(bucket_prefix, client):
-
-    str_timestamp = datetime.now().isoformat()
-    bucket_name = bucket_prefix + str_timestamp
-
-    #format bucket name
-    bucket_name = bucket_name.lower()
-    bucket_name = bucket_name.replace(':', '')
-    bucket_name = bucket_name.replace('.', '')
-
+def fetch_from_s3(bucket, key,s3 ):
+    logger.info('Lambda handler invoked with event: %s', json.dumps([bucket, key]))
     try:
-        client.create_bucket(
-            Bucket=bucket_name,
-            CreateBucketConfiguration = {
-                    'LocationConstraint': 'eu-west-2'
-            }
-            )
-        return bucket_name
-    except Exception:
-        return 'An error has occured' # To be replaced with logger.log['CRITICAL']
-        exit()
+        logger.info("Fetching object from S3: bucket=%s, key=%s", bucket, key)
+        response = s3.get_object(Bucket=bucket, Key=key)
+        content = json.loads(response['Body'].read().decode('utf-8'))
+        logger.info("Successfully retrieved and parsed object from S3")
+        return content
+    
+    except s3.exceptions.NoSuchKey:
+        logger.error("Object not found in S3: bucket=%s, key=%s", bucket, key)
+    except json.JSONDecodeError as e:
+        logger.error("Failed to decode JSON: %s", e)
 
 def fetch_data_from_table(conn, table_name):
     query = f"SELECT * FROM {table_name};"
@@ -73,37 +68,27 @@ def fetch_data_from_table(conn, table_name):
     
     return data
 
-def save_to_json(data, filename):
-    filepath = os.path.join("data", filename) 
-    os.makedirs("data", exist_ok=True)
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=4)
-    return f"File '{filename}' has been saved successfully in the 'data' directory."
+def get_latest_s3_keys(bucket,s3_client):
+    all_objects = s3_client.list_objects_v2(Bucket=bucket)
+    all_key_timestamps = [item['Key'][0:26] for item in all_objects['Contents']]
+    latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
+    return latest_timestamp
 
-def save_to_s3(data, bucket_name, filename, client):
-    data_JSON = json.dumps(data)
-    client.put_object(
-        Bucket=bucket_name,
-        Body=data_JSON,
-        Key=filename
-    )
 
-def main(event, context, fetch_func=fetch_data_from_table, save_func=save_to_s3):
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')
+    out_dict = {'db': {}, 's3': {}}
+    ingestion_bucket = "ingestion-bucket-neural-normalisers-new"
+
+    latest_timestamp = get_latest_s3_keys(ingestion_bucket,s3)
+
     conn = connect_to_db()
-    messages = []
-    str_timestamp = datetime.now().isoformat()
-    client = boto3.client('s3')
-    try:
-        for table in tables:
-            messages.append(f"Extracting data from {table}...")
-            data = fetch_func(conn, table)
-            json_filename = f"{str_timestamp}/{table}.json"
-            
-            save_func(data, 'ingestion-bucket-neural-normalisers-new', json_filename, client)
-            messages.append("Mock save successful")
+    for table in tables:
+        out_dict['db'][table] = fetch_data_from_table(conn, table)
+        
+        s3_key = f'{latest_timestamp}/{table}.json'
+        out_dict['s3'][table] = fetch_from_s3(ingestion_bucket, s3_key, s3)
+
+    return out_dict
 
 
-    finally:
-        close_db_connection(conn)
-        messages.append("Database connection closed.")
-    return messages
