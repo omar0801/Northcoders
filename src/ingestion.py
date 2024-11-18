@@ -86,6 +86,11 @@ def check_additions(db_data, s3_data):
         change_log['message'] = 'No records found in database'
         return change_log
     
+    if not s3_data:
+        change_log['records'] = 'no s3 data'
+        return change_log
+
+    
     last_record = s3_data[-1]
     last_id = list(last_record.values())[0]    
     temp_rec = []
@@ -107,8 +112,13 @@ def check_additions(db_data, s3_data):
     return change_log
     
 def check_deletions(db_data, s3_data):
+
     
     delete_log = {}
+
+    if not s3_data:
+        delete_log['records'] = 'no s3 data'
+        return delete_log
 
     s3_id_list = [list(rec.values())[0] for rec in s3_data]
     db_id_list = [list(rec.values())[0] for rec in db_data]
@@ -128,6 +138,10 @@ def check_deletions(db_data, s3_data):
     
 def check_changes(db_data, s3_data):
     change_log = {}
+
+    if not s3_data:
+        change_log['records'] = 'no s3 data'
+        return change_log
 
     s3_dict = {list(rec.values())[0]: rec for rec in s3_data}
     db_dict = {list(rec.values())[0]: rec for rec in db_data}
@@ -219,10 +233,10 @@ def lambda_handler(event, context):
 
     str_timestamp = datetime.now().isoformat()
 
-    for table in changed_tables:
+    for table in tables:
         json_filename = f"{table}/{str_timestamp}.json"
         save_to_s3(data['db'][table], ingestion_bucket, json_filename, s3)
 
 
 
-
+lambda_handler(None, None)

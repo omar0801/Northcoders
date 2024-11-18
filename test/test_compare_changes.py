@@ -113,6 +113,12 @@ class TestCheckAdditions():
         result = check_additions(db_data, s3_data)
         assert result['message'] == 'No records found in database'
 
+    def test_return_message_if_s3_data_is_empty(self):
+        s3_data = []
+
+        result = check_additions(db_data, s3_data)
+        assert result['records'] == 'no s3 data'
+
 class TestCheckDeletions():
     def test_detects_one_deleted_item(self):
         result = check_deletions(s3_data, db_data)
