@@ -222,6 +222,12 @@ class TestCheckDeletions():
         result = check_deletions(db_data, s3_data)
         assert result['message'] == 'No deletions detected'
         assert 'records' not in list(result.keys())
+    
+    def test_for_empty_s3(self):
+        s3_data = []
+
+        result = check_deletions(db_data, s3_data)
+        assert result['records'] == 'no s3 data'
 
 class TestCheckChanges():
     def test_detects_single_change(self):
@@ -353,6 +359,12 @@ class TestCheckChanges():
         result = check_changes(db_data, s3_data)
         assert result['message'] == 'No changes detected'
         assert 'records' not in list(result.keys())
+    
+    def test_check_changes_for_empty_s3_(self):
+        s3_data = []
+
+        result = check_changes(db_data, s3_data)
+        assert result['records'] == 'no s3 data'
 
 
 
@@ -636,6 +648,14 @@ class TestMainFunc():
         s3_mock_dict = json.loads(s3_mock_data_body)
 
         assert s3_mock_dict == {'payment': {'additions': None, 'deletions': None, 'changes': None}}
+
+    def test_no_data_for_s3(self, records, s3_mock, datetime_mock):
+        def test_check_changes_for_empty_s3_(self):
+            records['s3']['currency'] = []
+            result = main_check_for_changes(records, s3_mock)
+
+            assert result == ['currency', 'payment']
+        
         
 
 
