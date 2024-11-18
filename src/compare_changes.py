@@ -88,7 +88,7 @@ def main_check_for_changes(event, context, client):
 
     keys = list(s3.keys())
     str_timestamp = datetime.now().isoformat()
-    change_detected = {}
+    change_detected = []
 
     for table in keys:
         changes_rec = {}
@@ -102,19 +102,17 @@ def main_check_for_changes(event, context, client):
         
         deletions_result = check_deletions(db[table], s3[table])
         if 'records' in list(deletions_result.keys()):
-            # change_detected['changes detected'] = True
             changes_rec[table]['deletions'] = deletions_result['records']
         else:
             changes_rec[table]['deletions'] = None
 
         changes_result = check_changes(db[table], s3[table])
         if 'records' in list(changes_result.keys()):
-            # change_detected['changes detected'] = True
             changes_rec[table]['changes'] = changes_result['records']
         else:
             changes_rec[table]['changes'] = None
         if any(changes_rec[table].values()):
-            change_detected[table] = db[table]
+            change_detected.append(table)
         
 
         
@@ -122,10 +120,9 @@ def main_check_for_changes(event, context, client):
         client.put_object(
             Bucket= 'ingestion-bucket-neural-normalisers-new',
             Body=data_JSON,
-            Key= f"changes_log/{str_timestamp}/{table}.json"
+            Key= f"changes_log/{table}/{str_timestamp}.json"
             )
-        
-    # print(change_detected)
+    
     return change_detected
 
 

@@ -436,22 +436,21 @@ def datetime_mock():
         yield mock_dt
 
 
-@mock_aws
 class TestMainFunc():
 
     def test_check_for_no_changes(self, records, s3_mock, datetime_mock):
         results = main_check_for_changes(records, {}, s3_mock)
-        assert results == {}
+        assert results == []
 
         s3_contents = s3_mock.list_objects_v2(
             Bucket='ingestion-bucket-neural-normalisers-new'
         )
 
-        assert s3_contents['Contents'][0]['Key'] == 'changes_log/mock_timestamp/currency.json'
-        assert s3_contents['Contents'][1]['Key'] == 'changes_log/mock_timestamp/payment.json'
+        assert s3_contents['Contents'][0]['Key'] == 'changes_log/currency/mock_timestamp.json'
+        assert s3_contents['Contents'][1]['Key'] == 'changes_log/payment/mock_timestamp.json'
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/currency.json')
+            Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
         
@@ -459,20 +458,11 @@ class TestMainFunc():
         assert s3_mock_dict == {'currency': {'additions': None, 'deletions': None, 'changes': None}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/payment.json')
+            Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
         assert s3_mock_dict == {'payment': {'additions': None, 'deletions': None, 'changes': None}}
-
-
-
-
-
-        
-
-
-
 
     
     def test_for_additions(self, records, s3_mock, datetime_mock):
@@ -482,37 +472,19 @@ class TestMainFunc():
         "created_at": "2022-11-03T14:20:49.962000",
         "last_updated": "2022-11-03T14:20:49.962000"
     })
-        # pp.pprint(records)
+        
         result = main_check_for_changes(records, {}, s3_mock)
         
         s3_contents = s3_mock.list_objects_v2(
             Bucket='ingestion-bucket-neural-normalisers-new'
         )
 
-        assert result == {'currency': [
-    {
-        "currency_id": 1,
-        "currency_code": "GBP",
-        "created_at": "2022-11-03T14:20:49.962000",
-        "last_updated": "2022-11-03T14:20:49.962000"
-    },
-    {
-        "currency_id": 2,
-        "currency_code": "USD",
-        "created_at": "2022-11-03T14:20:49.962000",
-        "last_updated": "2022-11-03T14:20:49.962000"
-    },
-    {
-        "currency_id": 3,
-        "currency_code": "EUR",
-        "created_at": "2022-11-03T14:20:49.962000",
-        "last_updated": "2022-11-03T14:20:49.962000"
-    }]}
+        assert result == ['currency']
     
-        assert s3_contents['Contents'][0]['Key'] == 'changes_log/mock_timestamp/currency.json'
-        assert s3_contents['Contents'][1]['Key'] == 'changes_log/mock_timestamp/payment.json'
+        assert s3_contents['Contents'][0]['Key'] == 'changes_log/currency/mock_timestamp.json'
+        assert s3_contents['Contents'][1]['Key'] == 'changes_log/payment/mock_timestamp.json'
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-                    Key='changes_log/mock_timestamp/currency.json')
+                    Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
             
@@ -525,7 +497,7 @@ class TestMainFunc():
     }], 'deletions': None, 'changes': None}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-                    Key='changes_log/mock_timestamp/payment.json')
+                    Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
@@ -541,19 +513,13 @@ class TestMainFunc():
                 Bucket='ingestion-bucket-neural-normalisers-new'
             )
 
-        assert result == {'currency': [
-        {
-            "currency_id": 1,
-            "currency_code": "GBP",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        }]}
+        assert result == ['currency']
         
-        assert s3_contents['Contents'][0]['Key'] == 'changes_log/mock_timestamp/currency.json'
-        assert s3_contents['Contents'][1]['Key'] == 'changes_log/mock_timestamp/payment.json'
+        assert s3_contents['Contents'][0]['Key'] == 'changes_log/currency/mock_timestamp.json'
+        assert s3_contents['Contents'][1]['Key'] == 'changes_log/payment/mock_timestamp.json'
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/currency.json')
+            Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
         
@@ -561,7 +527,7 @@ class TestMainFunc():
         assert s3_mock_dict == {'currency': {'additions': None, 'deletions':[2], 'changes': None}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/payment.json')
+            Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
@@ -578,25 +544,13 @@ class TestMainFunc():
                 Bucket='ingestion-bucket-neural-normalisers-new'
             )
 
-        assert result == {'currency': [
-        {
-            "currency_id": 1,
-            "currency_code": "JPY",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        },
-        {
-            "currency_id": 2,
-            "currency_code": "USD",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        }]}
+        assert result == ['currency']
         
-        assert s3_contents['Contents'][0]['Key'] == 'changes_log/mock_timestamp/currency.json'
-        assert s3_contents['Contents'][1]['Key'] == 'changes_log/mock_timestamp/payment.json'
+        assert s3_contents['Contents'][0]['Key'] == 'changes_log/currency/mock_timestamp.json'
+        assert s3_contents['Contents'][1]['Key'] == 'changes_log/payment/mock_timestamp.json'
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/currency.json')
+            Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
         
@@ -605,7 +559,7 @@ class TestMainFunc():
             "currency_code": "JPY"}]}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/payment.json')
+            Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
@@ -623,35 +577,10 @@ class TestMainFunc():
         records['db']['payment'].pop(-1)
 
         result = main_check_for_changes(records, {}, s3_mock)
-        assert result == {'currency':
-        [{
-            "currency_id": 1,
-            "currency_code": "JPY",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        },
-        {
-            "currency_id": 2,
-            "currency_code": "USD",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        },
-        {
-            "currency_id": 3,
-            "currency_code": "EUR",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        }],
-        'payment':
-        [{
-        "payment_type_id": 1,
-        "payment_type_name": "SALES_RECEIPT",
-        "created_at": "2022-11-03T14:20:49.962000",
-        "last_updated": "2022-11-03T14:20:49.962000"
-       }]}
+        assert result == ['currency', 'payment']
         
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/currency.json')
+            Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
         
@@ -665,7 +594,7 @@ class TestMainFunc():
             "currency_code": "JPY"}]}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/payment.json')
+            Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
@@ -680,22 +609,10 @@ class TestMainFunc():
         })
         records['db']['currency'].pop(0)
         result = main_check_for_changes(records, {}, s3_mock)
-        assert result == {'currency':
-        [{
-            "currency_id": 2,
-            "currency_code": "USD",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        },
-        {
-            "currency_id": 3,
-            "currency_code": "EUR",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-        }]}
+        assert result == ['currency']
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/currency.json')
+            Key='changes_log/currency/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
         
@@ -708,7 +625,7 @@ class TestMainFunc():
         }], 'deletions':[1], 'changes': None}}
 
         s3_mock_data = s3_mock.get_object(Bucket='ingestion-bucket-neural-normalisers-new',
-            Key='changes_log/mock_timestamp/payment.json')
+            Key='changes_log/payment/mock_timestamp.json')
         s3_mock_data_body = s3_mock_data['Body'].read().decode('utf-8')
         s3_mock_dict = json.loads(s3_mock_data_body)
 
