@@ -9,7 +9,7 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
   "States": {
     "HelloWorld": {
       "Type": "Task",
-      "Resource": "${aws_lambda_function.extract_data.arn}",
+      "Resource": "${aws_lambda_function.ingestion.arn}",
       "End": true
     }
   }
