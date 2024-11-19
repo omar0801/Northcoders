@@ -19,18 +19,6 @@ def create_dim_location(address_data):
 
 
 
-# location_df = pd.DataFrame(columns=['location_id', 'address_line_1', 'address_line_2', 'district', 'city', 'postal_code', 'country', 'phone'])
 
-# column_names = list(location_df.columns)
-
-# for column in column_names:
-#     try:
-#         location_df[column] = address_df[column]
-#     except KeyError:
-#         continue
-# print(location_df)
-
-# duplicate = location_df[location_df.duplicated()]
-# print(duplicate)
 
 
