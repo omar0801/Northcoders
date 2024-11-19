@@ -109,9 +109,8 @@ resource "aws_iam_policy_attachment" "sfn_lambda_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaRole"
 }
 
-resource "aws_iam_role_policy" "eventbridge_sfn_policy" {
-    name = "eventbridge_sfn_policy"
-    role = aws_iam_role.iam_for_sfn.name
+resource "aws_iam_policy" "eventbridge_access_policy" {
+    name = "eventbridge-access-policy"
 
     policy = <<EOF
 {
@@ -129,4 +128,58 @@ resource "aws_iam_role_policy" "eventbridge_sfn_policy" {
     ]
 }
 EOF
+}
+
+resource "aws_iam_role" "eventbridge_scheduler_iam_role" {
+  name_prefix         = "eventbridge-scheduler-role-"
+  assume_role_policy  = <<EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "scheduler.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "scheduler" {
+  policy_arn = aws_iam_policy.eventbridge_access_policy.arn
+  role       = aws_iam_role.eventbridge_scheduler_iam_role.name
+}
+##
+resource "aws_iam_role_policy" "sns_publish_policy" {
+  name = "sns-publish"
+  role = aws_iam_role.lambda_role.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "sns:Publish",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "logs:StartQuery",
+          "logs:GetQueryResults",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "iam:ListAccountAliases",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
 }
