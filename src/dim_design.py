@@ -6,7 +6,7 @@ from pprint import pprint
 # print(design)
 
 def create_dim_design(design_JSON):
-    design_df = pd.json_normalize(design_JSON)
+    design_df = pd.DataFrame(design_JSON)
     dim_design = design_df.drop(['created_at', 'last_updated'], axis=1)
 
     return dim_design
