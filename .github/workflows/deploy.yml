@@ -3,7 +3,7 @@ name: de-neural-de-normalisers
 on:
   push:
     branches:
-      - terraform_cloudwatch_MJ
+      - main
 
 jobs:
   run-tests:
