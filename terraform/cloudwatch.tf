@@ -21,7 +21,6 @@ resource "aws_cloudwatch_log_metric_filter" "lambdaLogDataErrorsCountMetric" {
   
 }
 # SNS TOPIC/ EMAIL ALERT
-# endpoint  = "jayeguare@yahoo.co.uk"
 resource "aws_sns_topic" "errorsOverThresholdLimit" {
   name = "ErrorsOverThresholdLimit"
 }
