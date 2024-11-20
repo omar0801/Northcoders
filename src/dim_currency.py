@@ -11,7 +11,7 @@ def create_dim_currency(currency_data):
     dim_currency = df[['currency_id', 'currency_code']]
     dim_currency['currency_name'] = ["Great British Pounds", "US Dollars", 'Euros']
     print(dim_currency)
-    return dim_currency
+    return {'dataframe': dim_currency, 'table_name': 'dim_currency'}
 
 # create_dim_currency(currency_data)
 

@@ -60,7 +60,7 @@ def test_dataframe():
 class TestWriteDataframeToS3:
     def test_parquet_file_uploaded_to_s3_bucket(self, s3_mock, test_dataframe, datetime_mock ):
         test_df_dict = {'dataframe': test_dataframe, 'table_name': 'dim_location'}
-        write_dataframe_to_s3(test_df_dict)
+        write_dataframe_to_s3(test_df_dict, s3_mock)
         s3_contents = s3_mock.list_objects_v2(
                 Bucket='processing-bucket-neural-normalisers-new'
             )
