@@ -1,5 +1,5 @@
 resource "aws_sfn_state_machine" "sfn_state_machine" {
-  name     = "extract-data-state-machine"
+  name     = "neural-normalisers-state-machine"
   role_arn = aws_iam_role.iam_for_sfn.arn
 
   definition = <<EOF
