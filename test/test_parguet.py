@@ -13,7 +13,7 @@ def s3_mock():
     with mock_aws():
         s3 = boto3.client('s3')
         s3.create_bucket(
-            Bucket='ingestion-bucket-neural-normalisers-new',
+            Bucket='processing-bucket-neural-normalisers-new',
             CreateBucketConfiguration={
                 'LocationConstraint': 'eu-west-2'
             }
@@ -59,8 +59,9 @@ def test_dataframe():
 
 class TestWriteDataframeToS3:
     def test_parquet_file_uploaded_to_s3_bucket(self, s3_mock, test_dataframe, datetime_mock ):
-        write_dataframe_to_s3(test_dataframe)
+        test_df_dict = {'dataframe': test_dataframe, 'table_name': 'dim_location'}
+        write_dataframe_to_s3(test_df_dict)
         s3_contents = s3_mock.list_objects_v2(
-                Bucket='ingestion-bucket-neural-normalisers-new'
+                Bucket='processing-bucket-neural-normalisers-new'
             )
         assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'

@@ -8,7 +8,7 @@ def create_dim_location(address_data):
     location_df = address_df.drop(['created_at', 'last_updated'], axis=1)
     location_df = location_df.rename(columns={'address_id': 'location_id'})
 
-    return location_df
+    return {'dataframe': location_df, 'table_name': 'dim_location'}
 
 
 # def write_dataframe_to_s3(df):

@@ -40,7 +40,7 @@ def records():
 class TestCreateDimLocation:    
     def test_dataframe_contains_correct_columns(self, records):
         output = create_dim_location(records)
-        column_names = list(output.columns)
+        column_names = list(output['dataframe'].columns)
         assert len(column_names) == 8
         assert 'location_id' in column_names
         assert 'address_line_1' in column_names
@@ -53,7 +53,7 @@ class TestCreateDimLocation:
 
     def test_dataframe_contains_correct_values(self, records):
         output = create_dim_location(records)
-        output = output.map(lambda x: None if pd.isna(x) else x)
+        output = output['dataframe'].map(lambda x: None if pd.isna(x) else x)
         for i in range(len(records)):
             row_values = output.iloc[i]
             output_values = row_values.tolist()
