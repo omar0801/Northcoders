@@ -66,9 +66,9 @@ def fetch_data_from_table(conn, table_name):
     return data
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
-    all_objects = s3_client.list_objects_v2(Bucket=bucket)
+    all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=table_name)
     table_name += '/'
-    all_key_timestamps = [item['Key'][-31:-5] for item in all_objects['Contents'] if 'changes_log' not in item['Key'] and table_name in item['Key']]
+    all_key_timestamps = [item['Key'][-31:-5] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
     return latest_timestamp
 
@@ -239,3 +239,4 @@ def lambda_handler(event, context):
         save_to_s3(data['db'][table], ingestion_bucket, json_filename, s3)
 
 
+lambda_handler(None, None)
