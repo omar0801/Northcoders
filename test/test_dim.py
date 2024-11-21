@@ -9,7 +9,7 @@ counterparty_JSON = [
   {
     "counterparty_id": 1,
     "counterparty_legal_name": "Fahey and Sons",
-    "legal_address_id": 15,
+    "legal_address_id": 1,
     "commercial_contact": "Micheal Toy",
     "delivery_contact": "Mrs. Lucy Runolfsdottir",
     "created_at": "2022-11-03T14:20:51.563000",
@@ -18,7 +18,7 @@ counterparty_JSON = [
   {
     "counterparty_id": 2,
     "counterparty_legal_name": "Leannon, Predovic and Morar",
-    "legal_address_id": 28,
+    "legal_address_id": 2,
     "commercial_contact": "Melba Sanford",
     "delivery_contact": "Jean Hane III",
     "created_at": "2022-11-03T14:20:51.563000",
@@ -27,12 +27,13 @@ counterparty_JSON = [
   {
     "counterparty_id": 3,
     "counterparty_legal_name": "Armstrong Inc",
-    "legal_address_id": 2,
+    "legal_address_id": 3,
     "commercial_contact": "Jane Wiza",
     "delivery_contact": "Myra Kovacek",
     "created_at": "2022-11-03T14:20:51.563000",
     "last_updated": "2022-11-03T14:20:51.563000"
   }]
+
 
 address_JSON = [
   {
@@ -71,7 +72,6 @@ address_JSON = [
     "created_at": "2022-11-03T14:20:49.962000",
     "last_updated": "2022-11-03T14:20:49.962000"
   }]
-
 
 # returns dictionary with keys dataframe and table_name
 # table name should = dim design
@@ -119,17 +119,18 @@ class TestDimCounterparty:
                                                 'counterparty_postal_code',
                                                 'counterparty_legal_country',
                                                 'counterparty_phone_number']
-    @pytest.mark.skip    
+        
     def test_counterparty_df_has_correct_data(self):
         result = create_dim_counterparty(counterparty_JSON, address_JSON)
         first_line = result.loc[0]
         assert first_line.to_dict() == {'counterparty_id': 1,
-                                        'counterparty_legal_address_line_1': '605 Haskell Trafficway',
-                                        'counterparty_legal_address_line_2': 'Axel Freeway',
-                                        'counterparty_legal_city': 'East Bobbie',
-                                        'counterparty_legal_country': 'Heard Island and McDonald Islands',
-                                        'counterparty_legal_district': None,
+                                        'counterparty_legal_address_line_1': '6826 Herzog Via',
+                                        'counterparty_legal_address_line_2': None,
+                                        'counterparty_legal_city': 'New Patienceburgh',
+                                        'counterparty_legal_country': 'Turkey',
+                                        'counterparty_legal_district': 'Avon',
                                         'counterparty_legal_name': 'Fahey and Sons',
-                                        'counterparty_phone_number': '9687 937447',
-                                        'counterparty_postal_code': '88253-4257',
+                                        'counterparty_phone_number': '1803 637401',
+                                        'counterparty_postal_code': '28441',
                                         }
+        
