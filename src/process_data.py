@@ -92,7 +92,6 @@ def lambda_handler(event, context):
         change_log_timestamp = get_latest_s3_keys(ingestion_bucket,s3, 'changes_log/sales_order')
         sales_change_log_key = f'changes_log/sales_order/{change_log_timestamp}.json'
         change_log_data = fetch_from_s3(ingestion_bucket, sales_change_log_key, s3)
-        print(change_log_data)
         if any(change_log_data.values()):
             #call update facts_table function
             pass
