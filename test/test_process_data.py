@@ -2,7 +2,7 @@ from src.process_data import *
 import pytest
 from unittest.mock import patch
 from moto import mock_aws
-
+import io
 
 
 @pytest.fixture()
@@ -230,8 +230,8 @@ combined_data = [[
         {"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49", "amount": 100.0},
         {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49", "amount": 200.0},
         {"currency_id": 3, "currency_code": "EUR", "created_at": "2022-11-03T14:20:49", "amount": 200.0}
-    ]]
-        
+    ],
+[{"counterparty_id": 1, "counterparty_legal_name": "Fahey and Sons", "legal_address_id": 15, "commercial_contact": "Micheal Toy", "delivery_contact": "Mrs. Lucy Runolfsdottir", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}, {"counterparty_id": 2, "counterparty_legal_name": "Leannon, Predovic and Morar", "legal_address_id": 28, "commercial_contact": "Melba Sanford", "delivery_contact": "Jean Hane III", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}], [{"staff_id": 1, "first_name": "Jeremie", "last_name": "Franey", "department_id": 2, "email_address": "jeremie.franey@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}, {"staff_id": 2, "first_name": "Deron", "last_name": "Beier", "department_id": 6, "email_address": "deron.beier@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}], [{"department_id": 1, "department_name": "Sales", "location": "Manchester", "manager": "Richard Roma", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}, {"department_id": 2, "department_name": "Purchasing", "location": "Manchester", "manager": "Naomi Lapaglia", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}]]
 
 @pytest.fixture()
 def mock_fetch_from_s3():
@@ -247,9 +247,24 @@ class TestLambdaHandler():
         s3_contents = s3_mock_with_objects.list_objects_v2(
                 Bucket='processed-bucket-neural-normalisers'
             )
-        assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_currency/mock_timestamp.parquet'
-        assert s3_contents['Contents'][1]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
-        assert s3_contents['Contents'][2]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
+        assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_counterparty/mock_timestamp.parquet'
+        assert s3_contents['Contents'][1]['Key'] == 'processed_data/dim_currency/mock_timestamp.parquet'
+        assert s3_contents['Contents'][2]['Key'] == 'processed_data/dim_date/mock_timestamp.parquet'
+        assert s3_contents['Contents'][3]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
+        assert s3_contents['Contents'][4]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
+        assert s3_contents['Contents'][5]['Key'] == 'processed_data/dim_staff/mock_timestamp.parquet'
 
+    def test_check_dim_currency_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
 
+        currency_obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_currency/mock_timestamp.parquet')
         
+        df = pd.read_parquet(io.BytesIO(currency_obj['Body'].read()))
+
+        assert list(df.columns.values) ==  ['currency_id',
+                                            'currency_code',
+                                            'currency_name',
+                                           ]
+        first_line = df.loc[0]
+        assert first_line.to_dict() == {"currency_id": 1, "currency_code": "GBP", "currency_name": "Great British Pounds"}
