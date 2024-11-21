@@ -2,21 +2,25 @@ import pandas as pd
 from datetime import datetime
 from io import BytesIO
 import boto3
-import json, pprint
-from src.dim_design import create_dim_design
+import json
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 
 tables = [
-    "counterparty",
-    "currency",
-    "department",
-    "design",
-    "staff",
-    "sales_order",
+    # "counterparty",
     "address",
-    "payment",
-    "purchase_order",
-    "payment_type",
-    "transaction"
+    "design",
+    "currency",
+    # "department",
+    # "staff",
+    # "sales_order",
+    # "payment",
+    # "purchase_order",
+    # "payment_type",
+    # "transaction"
 ]
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
@@ -27,9 +31,18 @@ def get_latest_s3_keys(bucket,s3_client, table_name):
     return latest_timestamp
 
 def fetch_from_s3(bucket, key,s3 ):
-    response = s3.get_object(Bucket=bucket, Key=key)
-    content = json.loads(response['Body'].read().decode('utf-8'))
-    return content
+    logger.info('Lambda handler invoked with event: %s', json.dumps([bucket, key]))
+    try:
+        logger.info("Fetching object from S3: bucket=%s, key=%s", bucket, key)
+        response = s3.get_object(Bucket=bucket, Key=key)
+        content = json.loads(response['Body'].read().decode('utf-8'))
+        logger.info("Successfully retrieved and parsed object from S3")
+        return content
+    
+    except s3.exceptions.NoSuchKey:
+        logger.error("Object not found in S3: bucket=%s, key=%s", bucket, key)
+    except json.JSONDecodeError as e:
+        logger.error("Failed to decode JSON: %s", e)
 
 
 def create_dim_location(address_data):
@@ -40,10 +53,20 @@ def create_dim_location(address_data):
 
     return {'dataframe': location_df, 'table_name': 'dim_location'}
 
+def create_dim_design(design_JSON):
+    design_df = pd.DataFrame(design_JSON)
+    dim_design = design_df.drop(['created_at', 'last_updated'], axis=1)
 
-def create_dataframe_list():
-    create_dim_location
-    
+    return {'dataframe': dim_design, 'table_name': 'dim_design'}
+
+def create_dim_currency(currency_data):
+    df = pd.DataFrame(currency_data)
+    dim_currency = df[['currency_id', 'currency_code']]
+    dim_currency['currency_name'] = ["Great British Pounds", "US Dollars", 'Euros']
+    print(dim_currency)
+    return {'dataframe': dim_currency, 'table_name': 'dim_currency'}
+
+
 
 def write_dataframe_to_s3(df_dict, s3):
     str_timestamp = datetime.now().isoformat()
@@ -81,8 +104,11 @@ def lambda_handler(event, context):
 
         data[table] = fetch_from_s3(ingestion_bucket, s3_key, s3)
 
+    print(data)
     dataframes = []
     dataframes.append(create_dim_location(data['address']))
+    dataframes.append(create_dim_design(data['design']))
+    dataframes.append(create_dim_currency(data['currency']))
    
 
     if not check_for_fact_sales_parquet(s3):

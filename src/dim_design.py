@@ -9,4 +9,4 @@ def create_dim_design(design_JSON):
     design_df = pd.DataFrame(design_JSON)
     dim_design = design_df.drop(['created_at', 'last_updated'], axis=1)
 
-    return dim_design
+    return {'dataframe': dim_design, 'table_name': 'dim_design'}
