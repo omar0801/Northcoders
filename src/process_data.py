@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 from io import BytesIO
 import boto3
-import json
+import json, pprint
 from src.dim_design import create_dim_design
 
 tables = [
@@ -20,9 +20,9 @@ tables = [
 ]
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
-    all_objects = s3_client.list_objects_v2(Bucket=bucket)
+    all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=table_name)
     table_name += '/'
-    all_key_timestamps = [item['Key'][-31:-5] for item in all_objects['Contents'] if 'changes_log' not in item['Key'] and table_name in item['Key']]
+    all_key_timestamps = [item['Key'][-31:-5] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
     return latest_timestamp
 
@@ -43,25 +43,30 @@ def create_dim_location(address_data):
 
 def create_dataframe_list():
     create_dim_location
-    # call each create_dim function and add returned dict to list
+    
 
 def write_dataframe_to_s3(df_dict, s3):
     str_timestamp = datetime.now().isoformat()
     bucket_name = "processed-bucket-neural-normalisers"
     key = f"processed_data/{df_dict['table_name']}/{str_timestamp}.parquet"
     
-    # Convert DataFrame to Parquet
+    
     parquet_buffer = BytesIO()
     df_dict['dataframe'].to_parquet(parquet_buffer, index=False, engine="pyarrow")
 
-    # Upload to S3
+    
     s3.put_object(
         Bucket=bucket_name,
         Key=key,
         Body=parquet_buffer.getvalue()
     )
 
-
+def check_for_fact_sales_parquet(s3_client):
+    fact_sales_parquet = s3_client.list_objects_v2(
+        Bucket="processed-bucket-neural-normalisers",
+        Prefix="processed_data/facts_sales/2"
+    )
+    return fact_sales_parquet["KeyCount"]
 
 
 def lambda_handler(event, context):
@@ -78,12 +83,18 @@ def lambda_handler(event, context):
 
     dataframes = []
     dataframes.append(create_dim_location(data['address']))
-    # dataframes.append(create_dim_design(data['design']))
+   
 
-    # check if facts_sales parquet file exists
-    # if not, create facts_sales parquet
-    # if file exists, check sales table change_log
-    # if change detected, call functions to add to facts table
+    if not check_for_fact_sales_parquet(s3):
+        #create facts_sales parquet
+        pass
+    else:
+        change_log_timestamp = get_latest_s3_keys(ingestion_bucket,s3, 'changes_log/sales_order')
+        sales_change_log_key = f'changes_log/sales_order/{change_log_timestamp}.json'
+        change_log_data = fetch_from_s3(ingestion_bucket, sales_change_log_key, s3)
+        if any(change_log_data.values()):
+            #call update facts_table function
+            pass
 
 
     for dataframe in dataframes:
@@ -93,8 +104,3 @@ def lambda_handler(event, context):
 
 if __name__ == '__main__':
     lambda_handler(None, None)
-
-
-
-# Updating records from change_log
-#
