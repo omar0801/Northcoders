@@ -237,6 +237,3 @@ def lambda_handler(event, context):
     for table in changed_tables:
         json_filename = f"{table}/{str_timestamp}.json"
         save_to_s3(data['db'][table], ingestion_bucket, json_filename, s3)
-
-
-lambda_handler(None, None)
