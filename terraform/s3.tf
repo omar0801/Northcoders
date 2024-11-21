@@ -2,6 +2,10 @@ resource "aws_s3_bucket" "ingestion-bucket" {
   bucket = "ingestion-bucket-neural-normalisers-new"
 }
 
+resource "aws_s3_bucket" "processed_bucket" {
+  bucket = "processed-bucket-neural-normalisers"
+}
+
 resource "aws_s3_bucket" "lambda_code_bucket" {
   bucket_prefix = "lambda-code-bucket"
 }
