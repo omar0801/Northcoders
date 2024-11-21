@@ -1,5 +1,4 @@
-from src.process_data import create_dim_design
-from src.process_data import create_dim_counterparty
+from src.process_data import *
 import json, pandas, pytest, pprint, os
 
 
@@ -33,7 +32,6 @@ counterparty_JSON = [
     "created_at": "2022-11-03T14:20:51.563000",
     "last_updated": "2022-11-03T14:20:51.563000"
   }]
-
 
 address_JSON = [
   {
@@ -104,12 +102,22 @@ class TestDimDesign:
 
 
 class TestDimCounterparty:
-    def test_counterparty_returns_pd_dataframe(self):
+    def test_returns_dict_with_correct_keys(self):
         result = create_dim_counterparty(counterparty_JSON, address_JSON)
+        assert isinstance(result, dict)
+        assert 'dataframe' in result.keys()
+        assert 'table_name' in result.keys()
+
+    def test_table_name_correct(self):
+        result = create_dim_counterparty(counterparty_JSON, address_JSON)['table_name']
+        assert result == 'dim_counterparty'
+
+    def test_counterparty_returns_pd_dataframe(self):
+        result = create_dim_counterparty(counterparty_JSON, address_JSON)['dataframe']
         assert type(result) == pandas.DataFrame
 
     def test_counterparty_df_has_correct_columns(self):
-        result = create_dim_counterparty(counterparty_JSON, address_JSON)
+        result = create_dim_counterparty(counterparty_JSON, address_JSON)['dataframe']
         assert list(result.columns.values) ==  ['counterparty_id',
                                                 'counterparty_legal_name',
                                                 'counterparty_legal_address_line_1',
@@ -121,7 +129,7 @@ class TestDimCounterparty:
                                                 'counterparty_phone_number']
         
     def test_counterparty_df_has_correct_data(self):
-        result = create_dim_counterparty(counterparty_JSON, address_JSON)
+        result = create_dim_counterparty(counterparty_JSON, address_JSON)['dataframe']
         first_line = result.loc[0]
         assert first_line.to_dict() == {'counterparty_id': 1,
                                         'counterparty_legal_address_line_1': '6826 Herzog Via',
@@ -134,3 +142,166 @@ class TestDimCounterparty:
                                         'counterparty_postal_code': '28441',
                                         }
         
+
+staff_json = [{"staff_id": 1, "first_name": "Jeremie", "last_name": "Franey", "department_id": 2, "email_address": "jeremie.franey@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}, {"staff_id": 2, "first_name": "Deron", "last_name": "Beier", "department_id": 6, "email_address": "deron.beier@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}]
+    
+dept_json = [{"department_id": 2, "department_name": "Purchasing", "location": "Manchester", "manager": "Naomi Lapaglia", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"},  {
+    "department_id": 6,
+    "department_name": "Facilities",
+    "location": "Manchester",
+    "manager": "Shelley Levene",
+    "created_at": "2022-11-03T14:20:49.962000",
+    "last_updated": "2022-11-03T14:20:49.962000"
+  }]
+
+class TestDimStaff():
+
+    def test_returns_dict_with_correct_keys(self):
+        result = create_dim_staff(staff_json, dept_json)
+        assert isinstance(result, dict)
+        assert 'dataframe' in result.keys()
+        assert 'table_name' in result.keys()
+
+    def test_table_name_correct(self):
+        result = create_dim_staff(staff_json, dept_json)
+        assert result['table_name'] == 'dim_staff'
+
+        
+    def test_dim_staff_table_returns_pd_dataframe(self):
+        response = create_dim_staff(staff_json, dept_json)
+        assert type(response['dataframe']) == pd.DataFrame
+        
+    def test_dim_staff_df_has_correct_columns(self):
+        response = create_dim_staff(staff_json, dept_json)
+        assert list(response['dataframe'].columns.values) == ['staff_id',
+                                            'first_name',
+                                            'last_name',
+                                            'department_name',
+                                            'location',
+                                            'email_address']
+    def test_design_df_has_correct_data(self):
+        response = create_dim_staff(staff_json, dept_json)
+        first_row = response['dataframe'].iloc[0]
+        assert first_row.to_dict() == {'staff_id': 1, 
+                                    'first_name': 'Jeremie',
+                                    "last_name": 'Franey',
+                                    'department_name': 'Purchasing',
+                                    'location': 'Manchester',
+                                    'email_address': 'jeremie.franey@terrifictotes.com'
+                                    }
+        
+currency_data = [{"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}, {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}, {"currency_id": 3, "currency_code": "EUR", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}]
+
+class TestDimCurrency():
+    def test_returns_dict_with_correct_keys(self):
+        result = create_dim_currency(currency_data)
+        assert isinstance(result, dict)
+        assert 'dataframe' in result.keys()
+        assert 'table_name' in result.keys()
+
+    def test_table_name_correct(self):
+        result = create_dim_currency(currency_data)
+        assert result['table_name'] == 'dim_currency'
+
+    def test_function_returns_df(self):
+
+        result = create_dim_currency(currency_data)
+        assert type(result['dataframe']) == pd.DataFrame
+
+    def test_dataframe_contents_correct(self):
+        currency_data = [{"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}, {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}, {"currency_id": 3, "currency_code": "EUR", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"}]
+
+        result = create_dim_currency(currency_data)['dataframe']
+        first_line = result.loc[0]
+        assert first_line.to_dict() == {"currency_id": 1, "currency_code": "GBP", "currency_name": "Great British Pounds"}
+
+        first_line = result.loc[1]
+        assert first_line.to_dict() == {"currency_id": 2, "currency_code": "USD", "currency_name": "US Dollars"}
+
+        first_line = result.loc[2]
+        assert first_line.to_dict() == {"currency_id": 3, "currency_code": "EUR", "currency_name": "Euros"}
+
+
+class TestDimDate():
+    def test_on_correct_date_format(self):
+        start_date = '2000-01-01'
+        end_date='2000-12-31'
+        df = create_dim_date(start_date, end_date)
+        df_value = df['dataframe'].index.values[0]
+        df_to_date = pd.Timestamp(df_value)
+        output = df_to_date.strftime('%Y-%m-%d')
+        assert output == '2000-01-01'
+    
+    def test_on_in_correct_start_date_format(self):
+        
+        start_date = '200001-01'
+        end_date='2000-12-31'
+        output = create_dim_date(start_date, end_date)
+        assert output == "Incorrect Date"
+        
+    def test_on_in_correct_end_date_format(self):
+        
+        start_date = '2000-01-01'
+        end_date='200012-31'
+        output = create_dim_date(start_date, end_date)
+        assert output == "Incorrect Date"
+        
+    def test_on_start_date_and_end_date_other_way_round(self):
+        start_date = '2000-01-01'
+        end_date='1900-12-31'
+        output = create_dim_date(start_date, end_date)
+        assert output == "End date must be greter then Start date"
+
+@pytest.fixture
+def records():
+    address_data = [
+      {
+            "address_id": 1,
+            "address_line_1": "6826 Herzog Via",
+            "address_line_2": None,
+            "district": "Avon",
+            "city": "New Patienceburgh",
+            "postal_code": "28441",
+            "country": "Turkey",
+            "phone": "1803 637401",
+            "created_at": "2022-11-03T14:20:49.962000",
+            "last_updated": "2022-11-03T14:20:49.962000"
+      },
+      {
+            "address_id": 2,
+            "address_line_1": "179 Alexie Cliffs",
+            "address_line_2": None,
+            "district": None,
+            "city": "Aliso Viejo",
+            "postal_code": "99305-7380",
+            "country": "San Marino",
+            "phone": "9621 880720",
+            "created_at": "2022-11-03T14:20:49.962000",
+            "last_updated": "2022-11-03T14:20:49.962000"
+      }]
+    return address_data
+
+class TestCreateDimLocation:    
+    def test_dataframe_contains_correct_columns(self, records):
+        output = create_dim_location(records)
+        column_names = list(output['dataframe'].columns)
+        assert len(column_names) == 8
+        assert 'location_id' in column_names
+        assert 'address_line_1' in column_names
+        assert 'address_line_2' in column_names
+        assert 'district' in column_names
+        assert 'city' in column_names
+        assert 'postal_code' in column_names
+        assert 'country' in column_names
+        assert 'phone' in column_names
+
+    def test_dataframe_contains_correct_values(self, records):
+        output = create_dim_location(records)
+        output = output['dataframe'].map(lambda x: None if pd.isna(x) else x)
+        for i in range(len(records)):
+            row_values = output.iloc[i]
+            output_values = row_values.tolist()
+            original_values = list(records[i].values())
+            assert len(output_values) == len(original_values) - 2
+            assert output_values[0] == original_values[0]
+            assert output_values[1:8] == original_values[1:8]
