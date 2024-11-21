@@ -1,14 +1,16 @@
 from src.dim_design import create_dim_design
 from src.dim_counterparty import create_dim_counterparty
-import json, pandas, pytest, pprint
+import json, pandas, pytest, pprint, os
 
-with open('/home/michael/Northcoders/de-project-specification/data/2024-11-18T13_37_12.390620.json', 'r') as design_json_file:
+# print(os.path.curdir)
+
+with open('./data/2024-11-18T13_37_12.390620.json', 'r') as design_json_file:
     design_JSON = json.load(design_json_file)
 
-with open('/home/michael/Northcoders/de-project-specification/data/counterparty_2.json', 'r') as counterparty_json_file:
+with open('./data/counterparty_2.json', 'r') as counterparty_json_file:
     counterparty_JSON = json.load(counterparty_json_file)
 
-with open('/home/michael/Northcoders/de-project-specification/data/address_2.json', 'r') as address_json_file:
+with open('./data/address_2.json', 'r') as address_json_file:
     address_JSON = json.load(address_json_file)
 
 
