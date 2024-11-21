@@ -5,6 +5,13 @@ data "archive_file" "ingestion" {
   output_path = "${path.module}/../src/ingestion.zip"
 }
 
+data "archive_file" "proccessing" {
+  type = "zip"
+  output_file_mode = "0666"
+  source_file = "${path.module}/../src/process_data.py"
+  output_path = "${path.module}/../src/process_data.zip"
+}
+
 
 data "archive_file" "layer" {
   type = "zip"
@@ -40,4 +47,15 @@ resource "aws_lambda_function" "ingestion" {
       PG_PASSWORD=var.PG_PASSWORD
     }
   }
+}
+
+resource "aws_lambda_function" "process_data" {
+  function_name = "process_data"
+  handler = "process_data.lambda_handler"
+  runtime = "python3.12"
+  timeout = 60
+  s3_bucket = aws_s3_bucket.lambda_code_bucket.id
+  s3_key = aws_s3_object.process_data_lambda.key
+  role = aws_iam_role.lambda_role.arn
+  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
 }

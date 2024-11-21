@@ -21,7 +21,7 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
             "Lambda.SdkClientException",
             "Lambda.TooManyRequestsException"
           ],
-          "IntervalSeconds": 1,
+          "IntervalSeconds": 60,
           "MaxAttempts": 3,
           "BackoffRate": 2,
           "JitterStrategy": "FULL"
