@@ -1,5 +1,5 @@
-from src.dim_design import create_dim_design
-from src.dim_counterparty import create_dim_counterparty
+from src.process_data import create_dim_design
+from src.process_data import create_dim_counterparty
 import json, pandas, pytest, pprint, os
 
 

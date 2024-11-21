@@ -1,4 +1,4 @@
-from src.parquet import write_dataframe_to_s3
+from src.process_data import write_dataframe_to_s3
 import pytest
 import json
 import pandas as pd
@@ -13,7 +13,7 @@ def s3_mock():
     with mock_aws():
         s3 = boto3.client('s3')
         s3.create_bucket(
-            Bucket='processing-bucket-neural-normalisers-new',
+            Bucket="processed-bucket-neural-normalisers",
             CreateBucketConfiguration={
                 'LocationConstraint': 'eu-west-2'
             }
@@ -22,7 +22,7 @@ def s3_mock():
 
 @pytest.fixture()
 def datetime_mock():
-    with patch('src.parquet.datetime') as mock_dt:
+    with patch('src.process_data.datetime') as mock_dt:
         mock_dt.now.return_value.isoformat.return_value = ('mock_timestamp')
         yield mock_dt
 
@@ -62,6 +62,6 @@ class TestWriteDataframeToS3:
         test_df_dict = {'dataframe': test_dataframe, 'table_name': 'dim_location'}
         write_dataframe_to_s3(test_df_dict, s3_mock)
         s3_contents = s3_mock.list_objects_v2(
-                Bucket='processing-bucket-neural-normalisers-new'
+                Bucket="processed-bucket-neural-normalisers"
             )
         assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
