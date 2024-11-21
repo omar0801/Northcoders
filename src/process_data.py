@@ -152,10 +152,6 @@ def lambda_handler(event, context):
 
         data[table] = fetch_from_s3(ingestion_bucket, s3_key, s3)
 
-    pprint(data['counterparty'])
-    pprint(data['address'])
-
-
     dataframes = []
     dataframes.append(create_dim_location(data['address']))
     dataframes.append(create_dim_design(data['design']))
@@ -163,16 +159,6 @@ def lambda_handler(event, context):
     dataframes.append(create_dim_counterparty(data['counterparty'], data['address']))
     dataframes.append(create_dim_staff(data['staff'], data['department']))
     dataframes.append(create_dim_date(start_date = '2022-01-01', end_date='2025-12-31'))
-   
-    # with pd.option_context('display.max_rows', None,
-    #                    'display.max_columns', None,
-    #                    'display.width', 1000,
-    #                    'display.precision', 3,
-    #                    'display.colheader_justify', 'left'):
-    #     pprint(dataframes[3]['dataframe'])
-
-    # counterparty = data is missing
-    # staff = only 1 record 
 
     if not check_for_fact_sales_parquet(s3):
         #create facts_sales parquet

@@ -91,4 +91,8 @@ def lambda_handler(event, context):
 
     return out_dict
 
-
+s3 = boto3.client('s3')
+latest_timestamp = get_latest_s3_keys("ingestion-bucket-neural-normalisers-new", s3)
+s3_key = '2024-11-18T14:29:05/counterparty.json'
+content = fetch_from_s3("ingestion-bucket-neural-normalisers-new", s3_key,s3)
+print(content)
