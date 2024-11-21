@@ -2,7 +2,7 @@ from src.process_data import *
 import pytest
 from unittest.mock import patch
 from moto import mock_aws
-
+import io
 
 
 @pytest.fixture()
@@ -203,18 +203,6 @@ def mock_get_latest_s3_keys():
 
 combined_data = [[
       {
-            "address_id": 1,
-            "address_line_1": "6826 Herzog Via",
-            "address_line_2": None,
-            "district": "Avon",
-            "city": "New Patienceburgh",
-            "postal_code": "28441",
-            "country": "Turkey",
-            "phone": "1803 637401",
-            "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"
-      },
-      {
             "address_id": 2,
             "address_line_1": "179 Alexie Cliffs",
             "address_line_2": None,
@@ -225,13 +213,61 @@ combined_data = [[
             "phone": "9621 880720",
             "created_at": "2022-11-03T14:20:49.962000",
             "last_updated": "2022-11-03T14:20:49.962000"
-      }], [{"design_id": 8,  "design_name": "Wooden", "file_location": "/usr", "file_name": "wooden-20220717-npgz.json", "created_at": "2022-11-03T14:20:49.962000",
-            "last_updated": "2022-11-03T14:20:49.962000"}], [
+      }, {
+    "address_id": 5,
+    "address_line_1": "34177 Upton Track",
+    "address_line_2": None,
+    "district": None,
+    "city": "Fort Shadburgh",
+    "postal_code": "55993-8850",
+    "country": "Bosnia and Herzegovina",
+    "phone": "0081 009772",
+    "created_at": "2022-11-03T14:20:49.962000",
+    "last_updated": "2022-11-03T14:20:49.962000"
+  }], [{
+    "design_id": 8,
+    "created_at": "2022-11-03T14:20:49.962000",
+    "design_name": "Wooden",
+    "file_location": "/usr",
+    "file_name": "wooden-20220717-npgz.json",
+    "last_updated": "2022-11-03T14:20:49.962000"
+  },
+  {
+    "design_id": 51,
+    "created_at": "2023-01-12T18:50:09.935000",
+    "design_name": "Bronze",
+    "file_location": "/private",
+    "file_name": "bronze-20221024-4dds.json",
+    "last_updated": "2023-01-12T18:50:09.935000"
+  }], [
         {"currency_id": 1, "currency_code": "GBP", "created_at": "2022-11-03T14:20:49", "amount": 100.0},
         {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49", "amount": 200.0},
         {"currency_id": 3, "currency_code": "EUR", "created_at": "2022-11-03T14:20:49", "amount": 200.0}
-    ]]
-        
+    ],
+[{
+    "counterparty_id": 3,
+    "counterparty_legal_name": "Armstrong Inc",
+    "legal_address_id": 2,
+    "commercial_contact": "Jane Wiza",
+    "delivery_contact": "Myra Kovacek",
+    "created_at": "2022-11-03T14:20:51.563000",
+    "last_updated": "2022-11-03T14:20:51.563000"
+  },   {
+    "counterparty_id": 9,
+    "counterparty_legal_name": "Price LLC",
+    "legal_address_id": 5,
+    "commercial_contact": "Sheryl Langworth",
+    "delivery_contact": "Simon Schoen",
+    "created_at": "2022-11-03T14:20:51.563000",
+    "last_updated": "2022-11-03T14:20:51.563000"
+  }], [{"staff_id": 1, "first_name": "Jeremie", "last_name": "Franey", "department_id": 2, "email_address": "jeremie.franey@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}, {"staff_id": 2, "first_name": "Deron", "last_name": "Beier", "department_id": 6, "email_address": "deron.beier@terrifictotes.com", "created_at": "2022-11-03T14:20:51.563000", "last_updated": "2022-11-03T14:20:51.563000"}], [{"department_id": 2, "department_name": "Purchasing", "location": "Manchester", "manager": "Naomi Lapaglia", "created_at": "2022-11-03T14:20:49.962000", "last_updated": "2022-11-03T14:20:49.962000"},  {
+    "department_id": 6,
+    "department_name": "Facilities",
+    "location": "Manchester",
+    "manager": "Shelley Levene",
+    "created_at": "2022-11-03T14:20:49.962000",
+    "last_updated": "2022-11-03T14:20:49.962000"
+  }]]
 
 @pytest.fixture()
 def mock_fetch_from_s3():
@@ -241,15 +277,139 @@ def mock_fetch_from_s3():
 
 
 class TestLambdaHandler():
-    def test_creates_dim_location_parquet_file(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+    def test_creates_dim_parquet_files(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
         lambda_handler(None, None)
 
         s3_contents = s3_mock_with_objects.list_objects_v2(
                 Bucket='processed-bucket-neural-normalisers'
             )
-        assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_currency/mock_timestamp.parquet'
-        assert s3_contents['Contents'][1]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
-        assert s3_contents['Contents'][2]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
+        assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_counterparty/mock_timestamp.parquet'
+        assert s3_contents['Contents'][1]['Key'] == 'processed_data/dim_currency/mock_timestamp.parquet'
+        assert s3_contents['Contents'][2]['Key'] == 'processed_data/dim_date/mock_timestamp.parquet'
+        assert s3_contents['Contents'][3]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
+        assert s3_contents['Contents'][4]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
+        assert s3_contents['Contents'][5]['Key'] == 'processed_data/dim_staff/mock_timestamp.parquet'
 
+    def test_check_dim_currency_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
 
+        currency_obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_currency/mock_timestamp.parquet')
         
+        df = pd.read_parquet(io.BytesIO(currency_obj['Body'].read()))
+
+        assert list(df.columns.values) ==  ['currency_id',
+                                            'currency_code',
+                                            'currency_name',
+                                           ]
+        assert df.loc[0].to_dict() == {"currency_id": 1, "currency_code": "GBP", "currency_name": "Great British Pounds"}
+
+    def test_check_dim_location_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_location/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+
+        column_names = list(df.columns)
+        assert len(column_names) == 8
+        assert 'location_id' in column_names
+        assert 'address_line_1' in column_names
+        assert 'address_line_2' in column_names
+        assert 'district' in column_names
+        assert 'city' in column_names
+        assert 'postal_code' in column_names
+        assert 'country' in column_names
+        assert 'phone' in column_names
+        
+        assert df.loc[0].to_dict() == {
+            "location_id": 2,
+            "address_line_1": "179 Alexie Cliffs",
+            "address_line_2": None,
+            "district": None,
+            "city": "Aliso Viejo",
+            "postal_code": "99305-7380",
+            "country": "San Marino",
+            "phone": "9621 880720",
+      }
+        assert df.loc[1].to_dict() == {
+            "location_id": 5,
+            "address_line_1": "34177 Upton Track",
+            "address_line_2": None,
+            "district": None,
+            "city": "Fort Shadburgh",
+            "postal_code": "55993-8850",
+            "country": "Bosnia and Herzegovina",
+            "phone": "0081 009772",
+      }
+
+
+    def test_check_dim_design_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_design/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+        assert df.loc[0].to_dict() == {"design_id": 8,  "design_name": "Wooden", "file_location": "/usr", "file_name": "wooden-20220717-npgz.json"}
+        assert df.loc[1].to_dict() == {
+        "design_id": 51,
+        "design_name": "Bronze",
+        "file_location": "/private",
+        "file_name": "bronze-20221024-4dds.json"}
+
+    def test_check_dim_counterparty_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_counterparty/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+        assert df.loc[0].to_dict() == {'counterparty_id': 3,
+                                    'counterparty_legal_address_line_1': "179 Alexie Cliffs",
+                                    'counterparty_legal_address_line_2': None,
+                                    'counterparty_legal_city': "Aliso Viejo",
+                                    'counterparty_legal_country': "San Marino",
+                                    'counterparty_legal_district': None,
+                                    'counterparty_legal_name': "Armstrong Inc",
+                                    'counterparty_phone_number': "9621 880720",
+                                    'counterparty_postal_code': "99305-7380",
+                                    }
+    
+    def test_check_dim_date_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_date/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+
+        column_names = list(df.columns)
+
+        assert "Year" in column_names
+        assert "Month" in column_names
+        assert "Day" in column_names
+        assert "Day_Of_Week" in column_names
+        assert "Day_Name" in column_names
+        assert "Quarter" in column_names
+    
+    def test_check_dim_staff_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/dim_staff/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+        assert df.loc[0].to_dict() == {'staff_id': 1,
+                           'first_name': "Jeremie",
+                           'last_name': "Franey",
+                           'department_name': "Purchasing",
+                           'location': "Manchester",
+                           'email_address': "jeremie.franey@terrifictotes.com"}
+        assert df.loc[1].to_dict() == {'staff_id': 2,
+                           'first_name': "Deron",
+                           'last_name': "Beier",
+                           'department_name': "Facilities",
+                           'location': "Manchester",
+                           'email_address': "deron.beier@terrifictotes.com"}
