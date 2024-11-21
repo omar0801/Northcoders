@@ -103,13 +103,6 @@ def lambda_handler(event, context):
     dataframes.append(create_dim_design(data['design']))
     dataframes.append(create_dim_currency(data['currency']))
 
-    print(dataframes)
-    # check if facts_sales parquet file exists
-    # if not, create facts_sales parquet
-    # if file exists, check sales table change_log
-    # if change detected, call functions to add to facts table
-
-
     for dataframe in dataframes:
         write_dataframe_to_s3(dataframe, s3)
 

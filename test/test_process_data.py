@@ -200,7 +200,6 @@ class TestWriteDataframeToS3:
 def mock_get_latest_s3_keys():
     with patch('src.process_data.get_latest_s3_keys') as latest_timestamp:
         latest_timestamp.return_value = ('latest_timestamp')
-        # yield latest_timestamp
 
 combined_data = [[
       {
@@ -232,18 +231,6 @@ combined_data = [[
         {"currency_id": 2, "currency_code": "USD", "created_at": "2022-11-03T14:20:49", "amount": 200.0},
         {"currency_id": 3, "currency_code": "EUR", "created_at": "2022-11-03T14:20:49", "amount": 200.0}
     ]]
-
-# @pytest.fixture()
-# def mock_fetch_from_s3():
-#     with patch('src.process_data.fetch_from_s3') as data:
-#         data.return_value = returned_data()
-#         yield data
-
-# def returned_data():
-#     for i in range(2):
-#         print(i)
-#         print(combined_data[i])
-#         yield combined_data[i]
         
 
 @pytest.fixture()
@@ -251,14 +238,6 @@ def mock_fetch_from_s3():
     with patch('src.process_data.fetch_from_s3') as mock_fetch:
         mock_fetch.side_effect = combined_data
         yield mock_fetch
-
-
-# @pytest.fixture()
-# def mock_create_dim_location():
-#     with patch('src.process_data.create_dim_location') as location_df:
-#         address_df = pd.DataFrame(address_data)
-#         location_df.return_value = {'dataframe': address_df, 'table_name': 'dim_location'}
-#         # yield location_df
 
 
 class TestLambdaHandler():
@@ -271,14 +250,6 @@ class TestLambdaHandler():
         assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_currency/mock_timestamp.parquet'
         assert s3_contents['Contents'][1]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
         assert s3_contents['Contents'][2]['Key'] == 'processed_data/dim_location/mock_timestamp.parquet'
-    
 
-    # def test_creates_dim_design_parquet_file(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
-    #     lambda_handler(None, None)
-
-    #     s3_contents = s3_mock_with_objects.list_objects_v2(
-    #             Bucket='processed-bucket-neural-normalisers'
-    #         )
-    #     assert s3_contents['Contents'][0]['Key'] == 'processed_data/dim_design/mock_timestamp.parquet'
 
         
