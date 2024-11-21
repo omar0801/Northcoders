@@ -239,4 +239,3 @@ def lambda_handler(event, context):
         save_to_s3(data['db'][table], ingestion_bucket, json_filename, s3)
 
 
-lambda_handler(None, None)
