@@ -27,7 +27,7 @@ resource "aws_sns_topic" "errorsOverThresholdLimit" {
 resource "aws_sns_topic_subscription" "projectEmailSubscription" {
   topic_arn = aws_sns_topic.errorsOverThresholdLimit.arn
   protocol  = "email"
-  endpoint  = "jayeguare@yahoo.co.uk"
+  endpoint  = "mpjames.mpj@gmail.com"
 }
 #metric_name               = aws_cloudwatch_log_metric_filter.lambdaLogDataErrorsCountMetric.name
 resource "aws_cloudwatch_metric_alarm" "lambdaErrorsCountAlarm" {
