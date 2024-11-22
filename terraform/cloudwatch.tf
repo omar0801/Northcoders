@@ -36,7 +36,7 @@ resource "aws_cloudwatch_metric_alarm" "lambdaErrorsCountAlarm" {
   evaluation_periods        = 1
   metric_name               = "Errors"
   namespace                 = "AWS/Lambda" 
-  period                    = 10
+  period                    = 61
   statistic                 = "Sum"
   threshold                 = 1
   alarm_description         = "major error(s) alarm"
