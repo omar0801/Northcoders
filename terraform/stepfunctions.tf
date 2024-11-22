@@ -10,7 +10,6 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
     "ingestion lambda": {
       "Type": "Task",
       "Resource": "${aws_lambda_function.ingestion.arn}",
-      "OutputPath": "$.Payload",
       "Parameters": {
         "Payload.$": "$",
         "FunctionName": "${aws_lambda_function.ingestion.arn}"
@@ -34,7 +33,6 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
     "process data lambda": {
       "Type": "Task",
       "Resource": "${aws_lambda_function.process_data.arn}",
-      "OutputPath": "$.Payload",
       "Parameters": {
         "FunctionName": "${aws_lambda_function.process_data.arn}"
       },
