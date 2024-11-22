@@ -48,6 +48,25 @@ resource "aws_cloudwatch_metric_alarm" "lambdaErrorsCountAlarm" {
 
     FunctionName = "ingestion"
   }
+}
+resource "aws_cloudwatch_metric_alarm" "lambda_2ErrorsCountAlarm" {
+  alarm_name                = "neural-normalisers-alarm-lambda-2"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "Errors"
+  namespace                 = "AWS/Lambda" 
+  period                    = 10
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "major error(s) alarm"
+  insufficient_data_actions = []
+  alarm_actions = [aws_sns_topic.errorsOverThresholdLimit.arn]
+  
+
+  dimensions = {
+
+    FunctionName = "process_data"
+  }
 
 }
 
