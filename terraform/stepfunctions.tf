@@ -21,7 +21,30 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
             "Lambda.SdkClientException",
             "Lambda.TooManyRequestsException"
           ],
-          "IntervalSeconds": 60,
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ], 
+      "Next": "Lambda Invoke"
+    },
+    "Lambda Invoke": {
+      "Type": "Task",
+      "Resource": "${aws_lambda_function.process_data.arn}",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "FunctionName": "${aws_lambda_function.process_data.arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
           "MaxAttempts": 3,
           "BackoffRate": 2,
           "JitterStrategy": "FULL"
