@@ -3,7 +3,7 @@ name: de-neural-de-normalisers
 on:
   push:
     branches:
-      - main
+      - Phase2_step_function
 
 jobs:
   run-tests:
