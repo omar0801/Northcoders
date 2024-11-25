@@ -1,13 +1,12 @@
 import pandas as pd
 # 'data/sales_order.json'
 
-def create_fact_sales_order_table(filepath):
-    sales_order_df = pd.read_json (filepath, orient='records', encoding='utf-8')
+def create_fact_sales_order_table(sales_data):
+    sales_order_df = pd.DataFrame(sales_data)
     sales_order_df['created_date'] = pd.to_datetime(sales_order_df['created_at']).dt.date
     sales_order_df['created_date'] = pd.to_datetime(sales_order_df['created_date'], format='%y%m%d')
     sales_order_df['created_time'] = pd.to_datetime(sales_order_df['created_at']).dt.time
-    sales_list = sales_order_df['sales_order_id'].tolist()
-    sales_order_df['sales_record_id'] = [i for i in range(1, len(sales_list) + 1)]
+    sales_order_df['sales_record_id'] = range(1, len(sales_order_df) + 1)
     date_list = sales_order_df['last_updated'].tolist()
     new_date_list = [pd.to_datetime(date.replace('T', ' ')) for date in date_list]
     sales_order_df['last_update'] = new_date_list
@@ -28,4 +27,7 @@ def create_fact_sales_order_table(filepath):
                                           'agreed_delivery_date',
                                           'agreed_delivery_location_id']]
     return fact_sales_order
+
+# result = create_fact_sales_order_table('data/sales_order.json')
+# print(result)
     
