@@ -87,8 +87,7 @@ def create_fact_sales_order_table(sales_data):
                                           'currency_id', 'design_id', 'agreed_payment_date',
                                           'agreed_delivery_date',
                                           'agreed_delivery_location_id']]
-    fact_sales_order = fact_sales_order.assign(status='current') 
-    return {'dataframe': fact_sales_order, 'table_name': 'facts_sales'}
+    return {'dataframe': fact_sales_order, 'table_name': 'fact_sales_order'}
 
 def create_dim_counterparty(counterparty, address):
     address = pd.DataFrame(address)
@@ -98,7 +97,7 @@ def create_dim_counterparty(counterparty, address):
 
     dim_counterparty = dim_counterparty.rename(columns={'address_line_1': 'counterparty_legal_address_line_1', 'address_line_2': 'counterparty_legal_address_line_2', 
                                     'district': 'counterparty_legal_district', 'city': 'counterparty_legal_city', 
-                                    'postal_code': 'counterparty_postal_code', 'country': 'counterparty_legal_country', 'phone': 'counterparty_phone_number'})
+                                    'postal_code': 'counterparty_legal_postal_code', 'country': 'counterparty_legal_country', 'phone': 'counterparty_legal_phone_number'})
     return {'dataframe': dim_counterparty, 'table_name': 'dim_counterparty'}
 
 def create_dim_staff(staff_data, department_data):
@@ -129,6 +128,7 @@ def create_dim_date(start_date = '2022-01-01', end_date='2025-12-31'):
             return "End date must be greter then Start date"
 
         df = pd.DataFrame({"date_id": pd.date_range(start_date, end_date)})
+        df["date_id"]
         df["year"] = df.date_id.dt.year
         df["month"] = df.date_id.dt.month
         df["day"] = df.date_id.dt.day
@@ -136,7 +136,7 @@ def create_dim_date(start_date = '2022-01-01', end_date='2025-12-31'):
         df["day_name"] = df.date_id.dt.day_name()
         df['month_name'] = df.date_id.dt.month_name()
         df["quarter"] = df.date_id.dt.quarter
-        df.set_index(['date_id'], inplace=True)
+        df.set_index(['date_id'], inplace=False)
         return {'dataframe': df, 'table_name': 'dim_date'}
     except:
         return "Incorrect Date"
@@ -184,49 +184,7 @@ def lambda_handler(event, context):
     dataframes.append(create_dim_counterparty(data['counterparty'], data['address']))
     dataframes.append(create_dim_staff(data['staff'], data['department']))
     dataframes.append(create_dim_date(start_date = '2022-01-01', end_date='2025-12-31'))
-
-    if not check_for_fact_sales_parquet(s3):
-        sales_df = create_fact_sales_order_table(data['sales_order'])
-        write_dataframe_to_s3(sales_df, s3)
-    else:
-        change_log_timestamp = get_latest_s3_keys(ingestion_bucket,s3, 'changes_log/sales_order')
-        sales_change_log_key = f'changes_log/sales_order/{change_log_timestamp}.json'
-        change_log_data = fetch_from_s3(ingestion_bucket, sales_change_log_key, s3)
-        if any(change_log_data.values()):
-            sales_order_timestamp = get_latest_s3_keys(processed_bucket, s3, 'processed_data/facts_sales')
-            obj = s3.get_object(Bucket=processed_bucket,
-            Key= f'processed_data/facts_sales/{sales_order_timestamp}.parquet')
-            
-            df = pd.read_parquet(BytesIO(obj['Body'].read()))
-            
-            deleted_records = change_log_data['sales_order']['deletions']
-            if deleted_records:
-                
-                for record in deleted_records:
-                    df.loc[df['sales_order_id']== record, 'status'] = 'deleted'
-            
-            added_records = change_log_data['sales_order']['additions']
-            updated_records = change_log_data['sales_order']['changes']
-            if updated_records:
-                for update in updated_records:
-                    df.loc[df['sales_order_id']== update['id'], 'status'] = 'archived'
-                    update_df = df.loc[df['sales_order_id'] == update['id']].tail(1)
-                    frame_list = [df, update_df]
-                    df = pd.concat(frame_list, ignore_index=True)
-                    df.iloc[-1,df.columns.get_loc('status')] = 'current'
-                    for key, value in update.items():
-                        if key == 'id': continue
-                        df.iloc[-1,df.columns.get_loc(key)] = value
-                        
-                    
-            if added_records:
-                added_df = create_fact_sales_order_table(added_records)['dataframe']
-                frames = [df, added_df]
-                output = pd.concat(frames)
-            
-            
-            write_dataframe_to_s3({'dataframe': output, 'table_name': 'facts_sales'}, s3)
-            
+    dataframes.append(create_fact_sales_order_table(data['sales_order']))            
             
         
     for dataframe in dataframes:

@@ -388,12 +388,12 @@ class TestLambdaHandler():
 
         column_names = list(df.columns)
 
-        assert "Year" in column_names
-        assert "Month" in column_names
-        assert "Day" in column_names
-        assert "Day_Of_Week" in column_names
-        assert "Day_Name" in column_names
-        assert "Quarter" in column_names
+        assert "year" in column_names
+        assert "month" in column_names
+        assert "day" in column_names
+        assert "day_of_week" in column_names
+        assert "day_name" in column_names
+        assert "quarter" in column_names
     
     def test_check_dim_staff_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
         lambda_handler(None, None)
@@ -447,7 +447,7 @@ class TestLambdaHandler():
                                    'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
                                    'agreed_delivery_location_id': 2,
                                    'status': 'current'}
-    
+    @pytest.mark.skip
     def test_check_fact_sales_deletion_changes_status_column(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
         s3_mock_with_objects.put_object(Bucket='processed-bucket-neural-normalisers',
                                         Key='processed_data/facts_sales/2timestamp.parquet')
