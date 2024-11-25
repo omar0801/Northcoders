@@ -66,9 +66,9 @@ def create_dim_currency(currency_data):
 
 def create_fact_sales_order_table(sales_data):
     sales_order_df = pd.DataFrame(sales_data)
-    sales_order_df['created_date'] = pd.to_datetime(sales_order_df['created_at']).dt.date
+    sales_order_df['created_date'] = pd.to_datetime(sales_order_df['created_at'], format='ISO8601').dt.date
     sales_order_df['created_date'] = pd.to_datetime(sales_order_df['created_date'], format='%y%m%d')
-    sales_order_df['created_time'] = pd.to_datetime(sales_order_df['created_at']).dt.time
+    sales_order_df['created_time'] = pd.to_datetime(sales_order_df['created_at'], format='ISO8601').dt.time
     sales_order_df['sales_record_id'] = range(1, len(sales_order_df) + 1)
     date_list = sales_order_df['last_updated'].tolist()
     new_date_list = [pd.to_datetime(date.replace('T', ' ')) for date in date_list]
