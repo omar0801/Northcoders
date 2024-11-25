@@ -2,7 +2,7 @@ from src.process_data import *
 import pytest
 from unittest.mock import patch
 from moto import mock_aws
-import io
+import io, datetime
 
 
 @pytest.fixture()
@@ -267,7 +267,8 @@ combined_data = [[
     "manager": "Shelley Levene",
     "created_at": "2022-11-03T14:20:49.962000",
     "last_updated": "2022-11-03T14:20:49.962000"
-  }]]
+  }], [{"sales_order_id": 11293, "created_at": "2024-11-21T18:22:10.134000", "last_updated": "2024-11-21T18:22:10.134000",
+        "design_id": 325, "staff_id": 13, "counterparty_id": 14, "units_sold": 41794, "unit_price": 2.08, "currency_id": 2, "agreed_delivery_date": "2024-11-24", "agreed_payment_date": "2024-11-26", "agreed_delivery_location_id": 2}, {"sales_order_id": 11294, "created_at": "2024-11-21T18:27:10.106000", "last_updated": "2024-11-21T18:27:10.106000", "design_id": 124, "staff_id": 1, "counterparty_id": 9, "units_sold": 87640, "unit_price": 3.41, "currency_id": 2, "agreed_delivery_date": "2024-11-27", "agreed_payment_date": "2024-11-27", "agreed_delivery_location_id": 28}], {"sales_order": {"additions": None, "deletions": [11293], "changes": None}}]
 
 @pytest.fixture()
 def mock_fetch_from_s3():
@@ -413,6 +414,66 @@ class TestLambdaHandler():
                            'department_name': "Facilities",
                            'location': "Manchester",
                            'email_address': "deron.beier@terrifictotes.com"}
+    
+    def test_creates_sales_order_parquet_files(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        s3_contents = s3_mock_with_objects.list_objects_v2(
+                Bucket='processed-bucket-neural-normalisers'
+            )
+        assert s3_contents['Contents'][6]['Key'] == 'processed_data/facts_sales/mock_timestamp.parquet'
+        
+    def test_check_fact_sales_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/facts_sales/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+        first_row = df.loc[0]
+        assert first_row.to_dict() == {'sales_record_id': 1,
+                                   'sales_order_id': 11293,
+                                   'created_date': pd.Timestamp('2024-11-21 00:00:00'),
+                                   'created_time': datetime.time(18, 22, 10, 134000),
+                                   'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
+                                   'last_updated_time': datetime.time(18, 22, 10, 134000),
+                                   'sales_staff_id': 13,
+                                   'counterparty_id': 14,
+                                   'units_sold': 41794,
+                                   'unit_price': 2.08,
+                                   'currency_id': 2,
+                                   'design_id': 325,
+                                   'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
+                                   'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
+                                   'agreed_delivery_location_id': 2,
+                                   'status': 'current'}
+    
+    def test_check_fact_sales_deletion_changes_status_column(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
+        s3_mock_with_objects.put_object(Bucket='processed-bucket-neural-normalisers',
+                                        Key='processed_data/facts_sales/2timestamp.parquet')
+        lambda_handler(None, None)
+
+        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
+            Key='processed_data/facts_sales/mock_timestamp.parquet')
+        
+        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+        first_row = df.loc[0]
+        assert first_row.to_dict() == {'sales_record_id': 1,
+                                   'sales_order_id': 11293,
+                                   'created_date': pd.Timestamp('2024-11-21 00:00:00'),
+                                   'created_time': datetime.time(18, 22, 10, 134000),
+                                   'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
+                                   'last_updated_time': datetime.time(18, 22, 10, 134000),
+                                   'sales_staff_id': 13,
+                                   'counterparty_id': 14,
+                                   'units_sold': 41794,
+                                   'unit_price': 2.08,
+                                   'currency_id': 2,
+                                   'design_id': 325,
+                                   'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
+                                   'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
+                                   'agreed_delivery_location_id': 2,
+                                   'status': 'deleted'}
     
 @pytest.fixture()
 def s3_mock():
