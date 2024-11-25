@@ -1,4 +1,4 @@
-from src.dim_date import create_dim_date
+from src.process_data import create_dim_date
 import pytest
 import pandas as pd
 
@@ -7,7 +7,7 @@ def test_on_correct_date_format():
     start_date = '2000-01-01'
     end_date='2000-12-31'
     df = create_dim_date(start_date, end_date)
-    df_value = df.index.values[0]
+    df_value = df['dataframe'].index.values[0]
     df_to_date = pd.Timestamp(df_value)
     output = df_to_date.strftime('%Y-%m-%d')
     assert output == '2000-01-01'

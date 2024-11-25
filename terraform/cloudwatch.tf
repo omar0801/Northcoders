@@ -27,11 +27,30 @@ resource "aws_sns_topic" "errorsOverThresholdLimit" {
 resource "aws_sns_topic_subscription" "projectEmailSubscription" {
   topic_arn = aws_sns_topic.errorsOverThresholdLimit.arn
   protocol  = "email"
-  endpoint  = "jayeguare@yahoo.co.uk"
+  endpoint  = "mpjames.mpj@gmail.com"
 }
 #metric_name               = aws_cloudwatch_log_metric_filter.lambdaLogDataErrorsCountMetric.name
 resource "aws_cloudwatch_metric_alarm" "lambdaErrorsCountAlarm" {
   alarm_name                = "neural-normalisers-alarm"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "Errors"
+  namespace                 = "AWS/Lambda" 
+  period                    = 61
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "major error(s) alarm"
+  insufficient_data_actions = []
+  alarm_actions = [aws_sns_topic.errorsOverThresholdLimit.arn]
+  
+
+  dimensions = {
+
+    FunctionName = "ingestion"
+  }
+}
+resource "aws_cloudwatch_metric_alarm" "lambda_2ErrorsCountAlarm" {
+  alarm_name                = "neural-normalisers-alarm-lambda-2"
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "Errors"
@@ -46,7 +65,7 @@ resource "aws_cloudwatch_metric_alarm" "lambdaErrorsCountAlarm" {
 
   dimensions = {
 
-    FunctionName = "ingestion"
+    FunctionName = "process_data"
   }
 
 }

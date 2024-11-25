@@ -1,11 +1,8 @@
 import pandas as pd
 
-address = pd.read_json('/home/michael/Northcoders/de-project-specification/data/address_2.json')
-counterparty = pd.read_json('/home/michael/Northcoders/de-project-specification/data/counterparty_2.json')
-
 def create_dim_counterparty(counterparty, address):
     address = pd.DataFrame(address)
-    counterparty = pd.json_normalize(counterparty)
+    counterparty = pd.DataFrame(counterparty)
     address_counterparty = pd.merge(counterparty, address, how='left', left_on='legal_address_id', right_on='address_id')
     dim_counterparty = address_counterparty[['counterparty_id', 'counterparty_legal_name', 'address_line_1', 'address_line_2', 'district', 'city', 'postal_code', 'country', 'phone']]
 

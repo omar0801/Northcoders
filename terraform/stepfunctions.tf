@@ -5,13 +5,36 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
   definition = <<EOF
 {
   "Comment": "Extract Data using an AWS Lambda Function",
-  "StartAt": "ExtractDataInvoke",
+  "StartAt": "ingestion lambda",
   "States": {
-    "ExtractDataInvoke": {
+    "ingestion lambda": {
       "Type": "Task",
       "Resource": "${aws_lambda_function.ingestion.arn}",
       "Parameters": {
+        "Payload.$": "$",
         "FunctionName": "${aws_lambda_function.ingestion.arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Next": "process data lambda"
+    },
+    "process data lambda": {
+      "Type": "Task",
+      "Resource": "${aws_lambda_function.process_data.arn}",
+      "Parameters": {
+        "FunctionName": "${aws_lambda_function.process_data.arn}"
       },
       "Retry": [
         {
