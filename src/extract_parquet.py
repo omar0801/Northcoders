@@ -2,7 +2,6 @@ from datetime import datetime
 import boto3
 import json
 import logging
-from pprint import pprint
 import pandas as pd
 from io import BytesIO
 
@@ -49,5 +48,6 @@ def lambda_handler(event, context):
     for table, df in data.items():
         print(f"Table: {table}")
         print(df)
+
 if __name__ == '__main__':
     lambda_handler(None, None)

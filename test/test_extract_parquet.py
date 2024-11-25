@@ -44,7 +44,7 @@ class TestGetLatestS3Keys:
         assert result == expected_result
 
 class TestFetchFromS3:
-    def test_function_success(self, s3_mock_with_bucket, caplog):
+    def test_function_success(self, s3_mock_with_bucket):
         df = pd.DataFrame({'test': ['test_value']})
         buffer = BytesIO()
         df.to_parquet(buffer, index=False, engine="pyarrow")
