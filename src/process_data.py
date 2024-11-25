@@ -145,26 +145,40 @@ def lambda_handler(event, context):
         sales_change_log_key = f'changes_log/sales_order/{change_log_timestamp}.json'
         change_log_data = fetch_from_s3(ingestion_bucket, sales_change_log_key, s3)
         if any(change_log_data.values()):
-            added_records = change_log_data['sales_order']['additions']
-            if added_records:
-                added_df = create_fact_sales_order_table(added_records)['dataframe']
-            deleted_records = change_log_data['sales_order']['deletions']
-            if deleted_records:
-                sales_order_timestamp = get_latest_s3_keys(processed_bucket, s3, 'processed_data/facts_sales')
-                obj = s3.get_object(Bucket=processed_bucket,
-                Key= f'processed_data/facts_sales/{sales_order_timestamp}.parquet')
-            
-                df = pd.read_parquet(BytesIO(obj['Body'].read()))
-                for record in deleted_records:
-                    df.loc[df['sales_order_id']== record, 'status'] = 'deleted'
-            
             sales_order_timestamp = get_latest_s3_keys(processed_bucket, s3, 'processed_data/facts_sales')
             obj = s3.get_object(Bucket=processed_bucket,
             Key= f'processed_data/facts_sales/{sales_order_timestamp}.parquet')
             
             df = pd.read_parquet(BytesIO(obj['Body'].read()))
-            frames = [df, added_df]
-            output = pd.concat(frames)
+            
+            deleted_records = change_log_data['sales_order']['deletions']
+            if deleted_records:
+                
+                for record in deleted_records:
+                    df.loc[df['sales_order_id']== record, 'status'] = 'deleted'
+            
+            added_records = change_log_data['sales_order']['additions']
+            updated_records = change_log_data['sales_order']['changes']
+            if updated_records:
+                for update in updated_records:
+                    df.loc[df['sales_order_id']== update['id'], 'status'] = 'archived'
+                    update_df = df.loc[df['sales_order_id'] == update['id']].tail(1)
+                    frame_list = [df, update_df]
+                    df = pd.concat(frame_list, ignore_index=True)
+                    df.iloc[-1,df.columns.get_loc('status')] = 'current'
+                    for key, value in update.items():
+                        if key == 'id': continue
+                        df.iloc[-1,df.columns.get_loc(key)] = value
+                        
+                    
+            if added_records:
+                added_df = create_fact_sales_order_table(added_records)['dataframe']
+                frames = [df, added_df]
+                output = pd.concat(frames)
+            
+            sales_df = create_fact_sales_order_table(output)
+            write_dataframe_to_s3({'dataframe': sales_df, 'table_name': 'facts_sales'}, s3)
+            
             
         
     for dataframe in dataframes:
