@@ -114,7 +114,7 @@ def create_dim_staff(staff_data, department_data):
                            'email_address']]
     return {'dataframe': dim_staff, 'table_name': 'dim_staff'}
 
-def create_dim_date(start_date = '2000-01-01', end_date='2000-12-31'):
+def create_dim_date(start_date = '2022-01-01', end_date='2025-12-31'):
 
     try:
         df_start_date = pd.Timestamp(start_date)  
@@ -128,14 +128,15 @@ def create_dim_date(start_date = '2000-01-01', end_date='2000-12-31'):
         if end_num_date < start_num_date :
             return "End date must be greter then Start date"
 
-        df = pd.DataFrame({"Date": pd.date_range(start_date, end_date)})
-        df["Year"] = df.Date.dt.year
-        df["Month"] = df.Date.dt.month_name()
-        df["Day"] = df.Date.dt.day
-        df["Day_Of_Week"] = df.Date.dt.day_of_week
-        df["Day_Name"] = df.Date.dt.day_name()
-        df["Quarter"] = df.Date.dt.quarter
-        df.set_index(['Date'], inplace=True)
+        df = pd.DataFrame({"date_id": pd.date_range(start_date, end_date)})
+        df["year"] = df.date_id.dt.year
+        df["month"] = df.date_id.dt.month
+        df["day"] = df.date_id.dt.day
+        df["day_of_week"] = df.date_id.dt.day_of_week
+        df["day_name"] = df.date_id.dt.day_name()
+        df['month_name'] = df.date_id.dt.month_name()
+        df["quarter"] = df.date_id.dt.quarter
+        df.set_index(['date_id'], inplace=True)
         return {'dataframe': df, 'table_name': 'dim_date'}
     except:
         return "Incorrect Date"
