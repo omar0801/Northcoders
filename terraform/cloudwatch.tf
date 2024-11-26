@@ -71,7 +71,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_2ErrorsCountAlarm" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_3ErrorsCountAlarm" {
-  alarm_name                = "neural-normalisers-alarm-lambda-2"
+  alarm_name                = "neural-normalisers-alarm-lambda-3"
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = 1
   metric_name               = "Errors"
