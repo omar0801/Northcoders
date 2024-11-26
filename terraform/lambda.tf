@@ -12,6 +12,13 @@ data "archive_file" "proccessing" {
   output_path = "${path.module}/../src/process_data.zip"
 }
 
+data "archive_file" "populate_data_warehouse" {
+  type = "zip"
+  output_file_mode = "0666"
+  source_file = "${path.module}/../src/populate_data_warehouse.py"
+  output_path = "${path.module}/../src/populate_data_warehouse.zip"
+}
+
 
 data "archive_file" "layer" {
   type = "zip"
@@ -56,6 +63,18 @@ resource "aws_lambda_function" "process_data" {
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.process_data_lambda.key
+  role = aws_iam_role.lambda_role.arn
+  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
+  memory_size = 500
+}
+
+resource "aws_lambda_function" "populate_data_warehouse" {
+  function_name = "populate_data_warehouse"
+  handler = "populate_data_warehouse.lambda_handler"
+  runtime = "python3.12"
+  timeout = 60
+  s3_bucket = aws_s3_bucket.lambda_code_bucket.id
+  s3_key = aws_s3_object.upload_to_warehouse_lambda.key
   role = aws_iam_role.lambda_role.arn
   layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
   memory_size = 500
