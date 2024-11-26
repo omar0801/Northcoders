@@ -28,8 +28,14 @@ resource "aws_s3_object" "populate_data_warehouse_lambda" {
   source = "${path.module}/../src/populate_data_warehouse.zip"
 }
 
-resource "aws_s3_object" "layer" {
+resource "aws_s3_object" "pg_8000_layer" {
   bucket = aws_s3_bucket.lambda_code_bucket.id
-  key = "layer"
+  key = "pg_8000_layer"
   source = "${path.module}/../layer.zip"
+}
+
+resource "aws_s3_object" "sqlalchemy_layer" {
+  bucket = aws_s3_bucket.lambda_code_bucket.id
+  key = "sqlalchemy_layer"
+  source = "${path.module}/../sqlalchemy_layer.zip"
 }

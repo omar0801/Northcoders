@@ -20,19 +20,32 @@ data "archive_file" "populate_data_warehouse" {
 }
 
 
-data "archive_file" "layer" {
+data "archive_file" "pg8000_layer" {
   type = "zip"
   output_file_mode = "0666"
   source_dir = "${path.module}/../layer"
   output_path = "${path.module}/../layer.zip"
 }
 
-resource "aws_lambda_layer_version" "project_layer" {
-  layer_name = "project_layer"
+data "archive_file" "sqlalchemy_layer" {
+  type = "zip"
+  output_file_mode = "0666"
+  source_dir = "${path.module}/../sqlalchemy_layer"
+  output_path = "${path.module}/../sqlalchemy_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "pg8000_layer" {
+  layer_name = "pg8000_layer"
   compatible_runtimes = ["python3.12"]
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
-  s3_key = aws_s3_object.layer.key
-  
+  s3_key = aws_s3_object.pg_8000_layer.key
+}
+
+resource "aws_lambda_layer_version" "sqlalchemy_layer" {
+  layer_name = "sqlalchemy_layer"
+  compatible_runtimes = ["python3.12"]
+  s3_bucket = aws_s3_bucket.lambda_code_bucket.id
+  s3_key = aws_s3_object.sqlalchemy_layer.key
 }
 
 resource "aws_lambda_function" "ingestion" {
@@ -43,7 +56,7 @@ resource "aws_lambda_function" "ingestion" {
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.ingestion_lambda.key
   role = aws_iam_role.lambda_role.arn
-  layers = [aws_lambda_layer_version.project_layer.arn]
+  layers = [aws_lambda_layer_version.pg8000_layer.arn]
   memory_size = 500
   environment {
     variables = {
@@ -76,7 +89,7 @@ resource "aws_lambda_function" "populate_data_warehouse" {
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.populate_data_warehouse_lambda.key
   role = aws_iam_role.lambda_role.arn
-  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
+  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14", aws_lambda_layer_version.sqlalchemy_layer.arn]
   memory_size = 500
   environment {
     variables = {
