@@ -20,8 +20,7 @@ def test_design_df_has_correct_columns():
                                           'counterparty_id', 'units_sold', 'unit_price',
                                           'currency_id', 'design_id', 'agreed_payment_date',
                                           'agreed_delivery_date',
-                                          'agreed_delivery_location_id',
-                                          'status']
+                                          'agreed_delivery_location_id']
 
 def test_design_df_has_correct_data():
     test_output_df = create_fact_sales_order_table(input_data)
@@ -40,7 +39,4 @@ def test_design_df_has_correct_data():
                                    'design_id': 325,
                                    'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
                                    'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
-                                   'agreed_delivery_location_id': 2,
-                                   'status': 'current'}
-    second_row = test_output_df['dataframe'].iloc[1]
-    assert second_row.to_dict()['status'] == 'current'
+                                   'agreed_delivery_location_id': 2}

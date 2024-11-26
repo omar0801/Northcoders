@@ -374,8 +374,8 @@ class TestLambdaHandler():
                                     'counterparty_legal_country': "San Marino",
                                     'counterparty_legal_district': None,
                                     'counterparty_legal_name': "Armstrong Inc",
-                                    'counterparty_phone_number': "9621 880720",
-                                    'counterparty_postal_code': "99305-7380",
+                                    'counterparty_legal_phone_number': "9621 880720",
+                                    'counterparty_legal_postal_code': "99305-7380",
                                     }
     
     def test_check_dim_date_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
@@ -421,13 +421,13 @@ class TestLambdaHandler():
         s3_contents = s3_mock_with_objects.list_objects_v2(
                 Bucket='processed-bucket-neural-normalisers'
             )
-        assert s3_contents['Contents'][6]['Key'] == 'processed_data/facts_sales/mock_timestamp.parquet'
+        assert s3_contents['Contents'][6]['Key'] == 'processed_data/fact_sales_order/mock_timestamp.parquet'
         
     def test_check_fact_sales_contains_correct_data(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
         lambda_handler(None, None)
 
         obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
-            Key='processed_data/facts_sales/mock_timestamp.parquet')
+            Key='processed_data/fact_sales_order/mock_timestamp.parquet')
         
         df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
         first_row = df.loc[0]
@@ -445,8 +445,7 @@ class TestLambdaHandler():
                                    'design_id': 325,
                                    'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
                                    'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
-                                   'agreed_delivery_location_id': 2,
-                                   'status': 'current'}
+                                   'agreed_delivery_location_id': 2}
     @pytest.mark.skip
     def test_check_fact_sales_deletion_changes_status_column(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
         s3_mock_with_objects.put_object(Bucket='processed-bucket-neural-normalisers',

@@ -124,9 +124,9 @@ class TestDimCounterparty:
                                                 'counterparty_legal_address_line_2',
                                                 'counterparty_legal_district',
                                                 'counterparty_legal_city',
-                                                'counterparty_postal_code',
+                                                'counterparty_legal_postal_code',
                                                 'counterparty_legal_country',
-                                                'counterparty_phone_number']
+                                                'counterparty_legal_phone_number']
         
     def test_counterparty_df_has_correct_data(self):
         result = create_dim_counterparty(counterparty_JSON, address_JSON)['dataframe']
@@ -138,8 +138,8 @@ class TestDimCounterparty:
                                         'counterparty_legal_country': 'Turkey',
                                         'counterparty_legal_district': 'Avon',
                                         'counterparty_legal_name': 'Fahey and Sons',
-                                        'counterparty_phone_number': '1803 637401',
-                                        'counterparty_postal_code': '28441',
+                                        'counterparty_legal_phone_number': '1803 637401',
+                                        'counterparty_legal_postal_code': '28441',
                                         }
         
 
@@ -227,7 +227,7 @@ class TestDimDate():
         start_date = '2000-01-01'
         end_date='2000-12-31'
         df = create_dim_date(start_date, end_date)
-        df_value = df['dataframe'].index.values[0]
+        df_value = df['dataframe'].loc[0]['date_id']
         df_to_date = pd.Timestamp(df_value)
         output = df_to_date.strftime('%Y-%m-%d')
         assert output == '2000-01-01'
