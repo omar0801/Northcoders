@@ -84,7 +84,7 @@ resource "aws_lambda_function" "process_data" {
 resource "aws_lambda_function" "populate_data_warehouse" {
   function_name = "populate_data_warehouse"
   handler = "populate_data_warehouse.lambda_handler"
-  runtime = "python3.12"
+  runtime = "python3.11"
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.populate_data_warehouse_lambda.key
