@@ -89,7 +89,7 @@ resource "aws_lambda_function" "populate_data_warehouse" {
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
   s3_key = aws_s3_object.populate_data_warehouse_lambda.key
   role = aws_iam_role.lambda_role.arn
-  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14", aws_lambda_layer_version.sqlalchemy_layer.arn]
+  layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python311:18", aws_lambda_layer_version.sqlalchemy_layer.arn]
   memory_size = 500
   environment {
     variables = {
