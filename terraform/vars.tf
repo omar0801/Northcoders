@@ -23,17 +23,17 @@ variable "PG_HOST" {
   
 }
 
-variable "PG_PASSWORD_dw" {
+variable "PG_PASSWORD_DW" {
     type = string
   
 }
 
-variable "PG_DATABASE_dw" {
+variable "PG_DATABASE_DW" {
     type = string
   
 }
 
-variable "PG_HOST_dw" {
+variable "PG_HOST_DW" {
     type = string
   
 }
