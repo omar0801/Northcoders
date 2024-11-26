@@ -13,13 +13,13 @@ host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
 port=5432
 
 tables = [
-    # 'dim_date',
-    # 'dim_location', 
-    # 'dim_design',
-    # 'dim_currency',
+    'dim_date',
+    'dim_location', 
+    'dim_design',
+    'dim_currency',
     'dim_counterparty',
-    # 'dim_staff', 
-    # 'fact_sales_order'
+    'dim_staff', 
+    'fact_sales_order'
 ]
 
 def connect_to_db():
@@ -74,28 +74,34 @@ def lambda_handler(event, context):
                                     'counterparty_legal_postal_code': "99305-7380",
                                     }
 
+        #check for modifications
+
+        to_upload_df = pd.DataFrame()
+         
+
         if len(parquet_df) > len(database_df):
             #find additions
+            parquet_df.isin(database_df)
             pass
+        else:
+            #find modifications
+            comparision_output = database_df.compare(parquet_df, keep_equal=True)
         
-        #find modifications
-        to_upload_df = database_df.compare(parquet_df, keep_equal=True)
-        print(type(to_upload_df))
 
 
 
-        # print(parquet_df)
-        # print(database_df)
+        print(parquet_df)
+        print(database_df)
 
-        # print(to_upload_df)
+        print(to_upload_df)
 
         # include_index = False
         # if table == 'dim_date':
         #     include_index = True
-        # try:
-        # parquet_df.to_sql(table, engine, if_exists='append', index=False)
-        # except:
-        #     print('sql error encountered')
+        try:
+            to_upload_df.to_sql(table, engine, if_exists='append', index=False)
+        except:
+            print('sql error encountered')
 
 lambda_handler(None, None)
 

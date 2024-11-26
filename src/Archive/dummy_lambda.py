@@ -28,6 +28,7 @@ def lambda_handler():
     #connect to data wharehoure
     conn = connect_to_db()
     # conn.run("UPDATE facts_sales_order SET units_sold = -1 WHERE day_name = 'Friday';")
+    # empty_table = conn.run('DELETE FROM dim_date;')
     empty_table = conn.run('SELECT * FROM fact_sales_order;')
     columns_names = [col['name'] for col in conn.columns]
     print(columns_names)
