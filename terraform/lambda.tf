@@ -58,4 +58,5 @@ resource "aws_lambda_function" "process_data" {
   s3_key = aws_s3_object.process_data_lambda.key
   role = aws_iam_role.lambda_role.arn
   layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
+  memory_size = 500
 }
