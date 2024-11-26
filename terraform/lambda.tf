@@ -74,8 +74,17 @@ resource "aws_lambda_function" "populate_data_warehouse" {
   runtime = "python3.12"
   timeout = 60
   s3_bucket = aws_s3_bucket.lambda_code_bucket.id
-  s3_key = aws_s3_object.upload_to_warehouse_lambda.key
+  s3_key = aws_s3_object.populate_data_warehouse_lambda.key
   role = aws_iam_role.lambda_role.arn
   layers = ["arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python312:14"]
   memory_size = 500
+  environment {
+    variables = {
+      PG_HOST=var.PG_HOST_dw
+      PG_PORT=var.PG_PORT
+      PG_DATABASE=var.PG_DATABASE_dw
+      PG_USER=var.PG_USER
+      PG_PASSWORD=var.PG_PASSWORD_dw
+    }
+  }
 }

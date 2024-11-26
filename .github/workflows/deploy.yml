@@ -81,6 +81,9 @@ jobs:
           TF_VAR_PG_PASSWORD: ${{secrets.PG_PASSWORD}}
           TF_VAR_PG_PORT: ${{secrets.PG_PORT}}
           TF_VAR_PG_USER: ${{secrets.PG_USER}}
+          TF_VAR_PG_DATABASE_dw: ${{secrets.PG_DATABASE_dw}}
+          TF_VAR_PG_HOST_dw: ${{secrets.PG_HOST_dw}}
+          TF_VAR_PG_PASSWORD_dw: ${{secrets.PG_PASSWORD_dw}}
         run: terraform plan
 
 
@@ -92,6 +95,9 @@ jobs:
           TF_VAR_PG_PASSWORD: ${{secrets.PG_PASSWORD}}
           TF_VAR_PG_PORT: ${{secrets.PG_PORT}}
           TF_VAR_PG_USER: ${{secrets.PG_USER}}
+          TF_VAR_PG_DATABASE_dw: ${{secrets.PG_DATABASE_dw}}
+          TF_VAR_PG_HOST_dw: ${{secrets.PG_HOST_dw}}
+          TF_VAR_PG_PASSWORD_dw: ${{secrets.PG_PASSWORD_dw}}
         run: terraform apply -auto-approve
 
 
