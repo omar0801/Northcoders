@@ -3,12 +3,8 @@ import pg8000.native, json, pandas as pd, io, boto3
 from sqlalchemy import create_engine
 from pprint import pprint
 from io import BytesIO
-
-user='project_team_11',
-password='Lr4jqizK8rUHkrp',
-database='postgres',
-host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
-port=5432
+import numpy as np
+import os
 
 tables = [
     'dim_date',
@@ -22,11 +18,11 @@ tables = [
 
 def connect_to_db():
     return pg8000.native.Connection(
-        user='project_team_11',
-        password='Lr4jqizK8rUHkrp',
-        database='postgres',
-        host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
-        port=5432
+        user=os.getenv("PG_USER"),
+        password=os.getenv("PG_PASSWORD_DW"),
+        database=os.getenv("PG_DATABASE_DW"),
+        host=os.getenv("PG_HOST_DW"),
+        port=int(os.getenv("PG_PORT"))
     )
 
 def close_db_connection(conn):
@@ -37,7 +33,8 @@ def get_latest_s3_keys(bucket,s3_client, table_name):
     all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     all_key_timestamps = [item['Key'][-34:-8] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
-    return latest_timestamp
+    previous_timestamp = sorted(all_key_timestamps, reverse=True)[1]
+    return [latest_timestamp, previous_timestamp]
 
 def fetch_from_s3(bucket, key,s3 ):
     response = s3.get_object(Bucket=bucket, Key=key)
@@ -48,58 +45,65 @@ def fetch_from_s3(bucket, key,s3 ):
 
 def lambda_handler(event, context):
 
-    engine = create_engine('postgresql://project_team_11:Lr4jqizK8rUHkrp@nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com:5432/postgres')
+    engine = create_engine(
+        url="postgresql://{0}:{1}@{2}:{3}/{4}".format(
+            os.getenv("PG_USER"), os.getenv("PG_PASSWORD_DW"), os.getenv("PG_HOST_DW"), int(os.getenv("PG_PORT")), os.getenv("PG_DATABASE_DW")
+        ))
 
     s3 = boto3.client('s3')
     bucket = 'processed-bucket-neural-normalisers'
 
     for table in tables:
-        timestamp = get_latest_s3_keys(bucket, s3, table)
-        key = f'processed_data/{table}/{timestamp}.parquet'
-        print(key)
-        parquet_df = fetch_from_s3(bucket, key, s3)
-
-        database_df = pd.read_sql(f'SELECT * FROM {table};', con=engine)
-
-        parquet_df.loc[2] = {'counterparty_id': 32,
-                                    'counterparty_legal_address_line_1': "Northcoders Avenue",
-                                    'counterparty_legal_address_line_2': None,
-                                    'counterparty_legal_city': "Aliso Viejo",
-                                    'counterparty_legal_country': "San Marino",
-                                    'counterparty_legal_district': None,
-                                    'counterparty_legal_name': "Armstrong Inc",
-                                    'counterparty_legal_phone_number': "9621 880720",
-                                    'counterparty_legal_postal_code': "99305-7380",
-                                    }
-
-        #check for modifications
-
-        to_upload_df = pd.DataFrame()
-         
-
-        if len(parquet_df) > len(database_df):
-            #find additions
-            parquet_df.isin(database_df)
-            pass
-        else:
-            #find modifications
-            comparision_output = database_df.compare(parquet_df, keep_equal=True)
+        print(f'processing: {table}')
+        conn = connect_to_db()
+        has_row = conn.run(f'select exists(select * from {table}) as has_row')[0][0]
+        latest_timestamp = get_latest_s3_keys(bucket, s3, table)[0]
+        latest_key = f'processed_data/{table}/{latest_timestamp}.parquet'
+        latest_df = fetch_from_s3(bucket, latest_key, s3)
+        print(latest_key)
+        previous_timestamp = get_latest_s3_keys(bucket, s3, table)[1]
+        previous_key = f'processed_data/{table}/{previous_timestamp}.parquet'
+        previous_df = fetch_from_s3(bucket, previous_key, s3)
+        print(previous_key)
         
+        # # print(latest_df)
+        # latest_df.loc[2, 'design_id'] = 7
 
+        # latest_df.loc[len(latest_df)] = {'sales_record_id': 11371,
+        #                            'sales_order_id': 11371,
+        #                            'created_date': pd.Timestamp('2024-11-21 00:00:00'),
+        #                            'created_time': datetime.time(18, 22, 10, 134000),
+        #                            'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
+        #                            'last_updated_time': datetime.time(18, 22, 10, 134000),
+        #                            'sales_staff_id': 13,
+        #                            'counterparty_id': 14,
+        #                            'units_sold': 41794,
+        #                            'unit_price': 2.08,
+        #                            'currency_id': 2,
+        #                            'design_id': 325,
+        #                            'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
+        #                            'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
+        #                            'agreed_delivery_location_id': 2}
 
+        if not has_row:
+            print(f'{table} populated')
+            latest_df.to_sql(table, engine, if_exists='append', index=False)
+        else:
+            if table == 'fact_sales_order':
 
-        print(parquet_df)
-        print(database_df)
+                df_diff = pd.merge(latest_df, previous_df, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+                
+                last_id = pd.read_sql(f'SELECT sales_record_id FROM {table} ORDER BY sales_record_id DESC LIMIT 1;', con=engine)
+                last_id = last_id['sales_record_id'].values[0]
 
-        print(to_upload_df)
+                df_diff['sales_record_id'] = (list(pd.RangeIndex(start=last_id+1, stop=(last_id+1)+len(df_diff))))
+              
+            else:
+                if len(latest_df) > len(previous_df):
+                    diff = len(latest_df) > len(previous_df)
+                    added_records = latest_df[-diff:]
+                    added_records.to_sql(table, engine, if_exists='append', index=False)
 
-        # include_index = False
-        # if table == 'dim_date':
-        #     include_index = True
-        try:
-            to_upload_df.to_sql(table, engine, if_exists='append', index=False)
-        except:
-            print('sql error encountered')
 
 lambda_handler(None, None)
 
