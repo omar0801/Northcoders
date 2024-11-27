@@ -1,5 +1,5 @@
-resource "aws_scheduler_schedule" "every30minutes" {
-  name       = "every30minutes"
+resource "aws_scheduler_schedule" "every20minutes" {
+  name       = "every20minutes"
   group_name = "default"
  
 
@@ -7,7 +7,7 @@ resource "aws_scheduler_schedule" "every30minutes" {
     mode = "OFF"
   }
 
-  schedule_expression = "rate(30 minutes)"
+  schedule_expression = "rate(20 minutes)"
   schedule_expression_timezone = "Europe/London"
 
   target {

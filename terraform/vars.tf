@@ -1,3 +1,8 @@
+variable "SNS_EMAIL" {
+    type = string
+  
+}
+
 variable "PG_USER" {
     type = string
   

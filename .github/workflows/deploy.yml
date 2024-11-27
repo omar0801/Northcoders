@@ -84,6 +84,7 @@ jobs:
           TF_VAR_PG_DATABASE_DW: ${{secrets.PG_DATABASE_DW}}
           TF_VAR_PG_HOST_DW: ${{secrets.PG_HOST_DW}}
           TF_VAR_PG_PASSWORD_DW: ${{secrets.PG_PASSWORD_DW}}
+          TF_VAR_SNS_EMAIL: ${{secrets.SNS_EMAIL}}
         run: terraform plan
 
 
@@ -98,6 +99,7 @@ jobs:
           TF_VAR_PG_DATABASE_DW: ${{secrets.PG_DATABASE_DW}}
           TF_VAR_PG_HOST_DW: ${{secrets.PG_HOST_DW}}
           TF_VAR_PG_PASSWORD_DW: ${{secrets.PG_PASSWORD_DW}}
+          TF_VAR_SNS_EMAIL: ${{secrets.SNS_EMAIL}}
         run: terraform apply -auto-approve
 
 
