@@ -56,7 +56,7 @@ coverage:
 
 
 ## Set up dev requirements (bandit, safety, black)
-dev-setup: setupreq bandit safety black 
+dev-setup: setupreq bandit safety black coverage
 
 # Build / Run
 
