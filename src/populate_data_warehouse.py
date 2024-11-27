@@ -29,6 +29,17 @@ def close_db_connection(conn):
     conn.close()
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
+    """
+    Finds the latest two timestamps of Parquet files for a specific table in an S3 bucket.
+
+    Args:
+        bucket: The S3 bucket name.
+        s3_client: The S3 client to interact with S3.
+        table_name: The name of the table to look for.
+
+    Returns:
+        list: The latest two Parquet file timestamps.
+    """
     prefix = f"processed_data/{table_name}/"
     all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     all_key_timestamps = [item['Key'][-34:-8] for item in all_objects['Contents']]
