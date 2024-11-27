@@ -20,6 +20,14 @@ tables = [
 ]
 
 def connect_to_db():
+    '''Creates and returns a pg8000 database connection object getting the required paramters from enviroment variables.
+
+    Args:
+        None
+
+    Returns:
+        pg8000 database connection object
+    '''
     return pg8000.native.Connection(
         user=os.getenv("PG_USER"),
         password=os.getenv("PG_PASSWORD"),
@@ -29,9 +37,29 @@ def connect_to_db():
     )
 
 def close_db_connection(conn):
+    '''
+    Closes passed pg8000 database connection
+    
+    Args:
+        pg8000 database connection object
+
+    Returns:
+        None
+        '''
     conn.close()
 
 def fetch_from_s3(bucket, key,s3 ):
+    """
+    Fetches and reads JSON data from S3.
+
+    Args:
+        bucket: Name of the S3 bucket.
+        key: Key of the object to retrieve.
+        s3: S3 client instance.
+
+    Returns:
+        dict: Parsed JSON content from the S3 object.
+    """
     logger.info('Lambda handler invoked with event: %s', json.dumps([bucket, key]))
     try:
         logger.info("Fetching object from S3: bucket=%s, key=%s", bucket, key)
@@ -46,6 +74,17 @@ def fetch_from_s3(bucket, key,s3 ):
         logger.error("Failed to decode JSON: %s", e)
 
 def fetch_data_from_table(conn, table_name):
+    '''
+    Fetches and returns data from database tables
+
+    Args:
+        conn: pg8000 database connection object
+        table_name: name of the table to fetch from.
+
+    Returns:
+        list of dictionaries with a dict for each reccord in the table
+    
+    '''
     query = f"SELECT * FROM {table_name};"
     
     result = conn.run(query)
@@ -66,6 +105,17 @@ def fetch_data_from_table(conn, table_name):
     return data
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
+    """
+    Finds the latest timestamp in a json file for a specific table in a S3 bucket.
+
+    Args:
+        bucket: The S3 bucket name.
+        s3_client: The S3 client to interact with S3.
+        table_name: The name of the table to look for.
+
+    Returns:
+        str: The latest timestamp of the file.
+    """
     all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=table_name)
     table_name += '/'
     all_key_timestamps = [item['Key'][-31:-5] for item in all_objects['Contents']]
@@ -73,6 +123,17 @@ def get_latest_s3_keys(bucket,s3_client, table_name):
     return latest_timestamp
 
 def save_to_s3(data, bucket_name, filename, client):
+    '''
+    Saves the data passes under a specific key in a specified S3 bucket.
+
+    Args:
+        data: the data to be saved to s3
+        bucket_name: The S3 bucket name.
+        filename: the key to save the object under
+        client: The S3 client to interact with S3.
+
+    Returns:
+        str: None.'''
     data_JSON = json.dumps(data)
     client.put_object(
         Bucket=bucket_name,
@@ -81,6 +142,18 @@ def save_to_s3(data, bucket_name, filename, client):
     )
 
 def check_additions(db_data, s3_data):
+    '''
+    Compares the two passed dicts and identifies extra records in db_data compared to s3_data
+
+    Args:
+        db_data:
+        s3_data:
+
+    Returns:
+        dict: 
+            ['message']: str detailing the findings
+            ['reccords]: the additions that were found
+    '''
 
     change_log = {}
     if not db_data:
@@ -113,8 +186,19 @@ def check_additions(db_data, s3_data):
     return change_log
     
 def check_deletions(db_data, s3_data):
+    '''
+    Compares the two passed dicts and identifies missing records in db_data compared to s3_data
 
-    
+    Args:
+        db_data:
+        s3_data
+
+    Returns:
+        dict: 
+            ['message']: str detailing the findings
+            ['reccords]: the deletions that were found
+    '''
+
     delete_log = {}
 
     if not s3_data:
@@ -138,6 +222,18 @@ def check_deletions(db_data, s3_data):
     return delete_log
     
 def check_changes(db_data, s3_data):
+    '''
+    Compares the two passed dicts and identifies changes to records in db_data compared to s3_data
+
+    Args:
+        db_data:
+        s3_data
+
+    Returns:
+        dict: 
+            ['message']: str detailing the findings
+            ['reccords]: the changes that were found
+    '''
     change_log = {}
 
     if not s3_data:
@@ -171,9 +267,19 @@ def check_changes(db_data, s3_data):
         
     return change_log
 
-def main_check_for_changes(event, client):
-    db = event['db']
-    s3 = event['s3']
+def main_check_for_changes(data, client):
+    '''
+    loops through each of the tables and calls check for additions, deletions and changes functions for each. compiles a list of tables in which changes are detected to return
+
+    Args:
+        data: Dict with keys 'db' and 's3' each of which are lists of dictionaries of lists reflecting the database and s3 data respectively.
+        client: The S3 client to interact with S3.
+
+    Returns:
+        list: names of tables in which changes were detected
+    '''
+    db = data['db']
+    s3 = data['s3']
 
     keys = list(s3.keys())
     str_timestamp = datetime.now().isoformat()
@@ -215,6 +321,16 @@ def main_check_for_changes(event, client):
     return change_detected
 
 def lambda_handler(event, context):
+    """
+    Function to be called as AWS lambda. Loops through the global table list and calls the above functions to extract data from the OTLP database, check if the data differs from the data stored in the AWS s3 bucket and uploads a new version if there has been a change.
+
+    Args:
+        event (dict): Event triggering the Lambda.
+        context (object): Context of the Lambda execution.
+
+    Returns:
+        None
+    """
     s3 = boto3.client('s3')
     conn = connect_to_db()
     data = {'db': {}, 's3': {}}
