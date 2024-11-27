@@ -55,7 +55,6 @@ resource "aws_sfn_state_machine" "sfn_state_machine" {
     "Populate Data Warehouse": {
       "Type": "Task",
       "Resource": "${aws_lambda_function.populate_data_warehouse.arn}",
-      "OutputPath": "$.Payload",
       "Parameters": {
         "FunctionName": "${aws_lambda_function.populate_data_warehouse.arn}"
       },
