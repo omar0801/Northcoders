@@ -17,6 +17,14 @@ tables = [
 ]
 
 def connect_to_db():
+    '''Creates and returns a pg8000 database connection object getting the required paramters from enviroment variables.
+
+    Args:
+        None
+
+    Returns:
+        pg8000 database connection object
+    '''
     return pg8000.native.Connection(
         user=os.getenv("PG_USER"),
         password=os.getenv("PG_PASSWORD_DW"),
@@ -26,6 +34,15 @@ def connect_to_db():
     )
 
 def close_db_connection(conn):
+    '''
+    Closes passed pg8000 database connection
+    
+    Args:
+        pg8000 database connection object
+
+    Returns:
+        None
+    '''
     conn.close()
 
 def get_latest_s3_keys(bucket,s3_client, table_name):
@@ -47,7 +64,18 @@ def get_latest_s3_keys(bucket,s3_client, table_name):
     previous_timestamp = sorted(all_key_timestamps, reverse=True)[1]
     return [latest_timestamp, previous_timestamp]
 
-def fetch_from_s3(bucket, key,s3 ):
+def fetch_from_s3(bucket, key, s3):
+    """
+    Fetches and reads parquet data from S3.
+
+    Args:
+        bucket: Name of the S3 bucket.
+        key: Key of the object to retrieve.
+        s3: S3 client instance.
+
+    Returns:
+        Pandas DataFrame: the parsed Parquet data from the S3 bucket.
+    """
     response = s3.get_object(Bucket=bucket, Key=key)
     content = BytesIO(response['Body'].read())
     df = pd.read_parquet(content)
@@ -55,7 +83,16 @@ def fetch_from_s3(bucket, key,s3 ):
 
 
 def lambda_handler(event, context):
+    """
+    Starting point for AWS Lambda function execution. Populates the data warehouse with data from the S3 bucket for processed data.
 
+    Args:
+        event (dict): Event triggering the Lambda.
+        context (object): Context of the Lambda execution.
+
+    Returns:
+        None
+    """
     engine = create_engine(
         url="postgresql://{0}:{1}@{2}:{3}/{4}".format(
             os.getenv("PG_USER"), os.getenv("PG_PASSWORD_DW"), os.getenv("PG_HOST_DW"), int(os.getenv("PG_PORT")), os.getenv("PG_DATABASE_DW")
@@ -97,5 +134,5 @@ def lambda_handler(event, context):
                     added_records.to_sql(table, engine, if_exists='append', index=False)
 
 
-lambda_handler(None, None)
-
+if __name__ == '__main__':
+    lambda_handler(None, None)
