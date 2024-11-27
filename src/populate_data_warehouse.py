@@ -6,13 +6,7 @@ from src.fact_sales_order import create_fact_sales_order_table
 from src.process_data import get_latest_s3_keys, fetch_from_s3, create_dim_date
 from io import BytesIO
 import numpy as np
-import datetime
-
-user='project_team_11',
-password='Lr4jqizK8rUHkrp',
-database='postgres',
-host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
-port=5432
+import os
 
 tables = [
     'dim_date',
@@ -26,11 +20,11 @@ tables = [
 
 def connect_to_db():
     return pg8000.native.Connection(
-        user='project_team_11',
-        password='Lr4jqizK8rUHkrp',
-        database='postgres',
-        host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
-        port=5432
+        user=os.getenv("PG_USER"),
+        password=os.getenv("PG_PASSWORD_DW"),
+        database=os.getenv("PG_DATABASE_DW"),
+        host=os.getenv("PG_HOST_DW"),
+        port=int(os.getenv("PG_PORT"))
     )
 
 def close_db_connection(conn):
@@ -53,8 +47,10 @@ def fetch_from_s3(bucket, key,s3 ):
 
 def lambda_handler(event, context):
 
-    engine = create_engine('postgresql://project_team_11:Lr4jqizK8rUHkrp@nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com:5432/postgres')
-    engine.dispose()
+    engine = create_engine(
+        url="postgresql://{0}:{1}@{2}:{3}/{4}".format(
+            os.getenv("PG_USER"), os.getenv("PG_PASSWORD_DW"), os.getenv("PG_HOST_DW"), int(os.getenv("PG_PORT")), os.getenv("PG_DATABASE_DW")
+        ))
 
     s3 = boto3.client('s3')
     bucket = 'processed-bucket-neural-normalisers'
