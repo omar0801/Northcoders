@@ -65,25 +65,6 @@ def lambda_handler(event, context):
         previous_key = f'processed_data/{table}/{previous_timestamp}.parquet'
         previous_df = fetch_from_s3(bucket, previous_key, s3)
         print(previous_key)
-        
-        # # print(latest_df)
-        # latest_df.loc[2, 'design_id'] = 7
-
-        # latest_df.loc[len(latest_df)] = {'sales_record_id': 11371,
-        #                            'sales_order_id': 11371,
-        #                            'created_date': pd.Timestamp('2024-11-21 00:00:00'),
-        #                            'created_time': datetime.time(18, 22, 10, 134000),
-        #                            'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
-        #                            'last_updated_time': datetime.time(18, 22, 10, 134000),
-        #                            'sales_staff_id': 13,
-        #                            'counterparty_id': 14,
-        #                            'units_sold': 41794,
-        #                            'unit_price': 2.08,
-        #                            'currency_id': 2,
-        #                            'design_id': 325,
-        #                            'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
-        #                            'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
-        #                            'agreed_delivery_location_id': 2}
 
         if not has_row:
             print(f'{table} populated')
