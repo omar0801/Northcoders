@@ -93,11 +93,11 @@ resource "aws_lambda_function" "populate_data_warehouse" {
   memory_size = 500
   environment {
     variables = {
-      PG_HOST=var.PG_HOST_DW
+      PG_HOST_DW=var.PG_HOST_DW
       PG_PORT=var.PG_PORT
-      PG_DATABASE=var.PG_DATABASE_DW
+      PG_DATABASE_DW=var.PG_DATABASE_DW
       PG_USER=var.PG_USER
-      PG_PASSWORD=var.PG_PASSWORD_DW
+      PG_PASSWORD_DW=var.PG_PASSWORD_DW
     }
   }
 }
