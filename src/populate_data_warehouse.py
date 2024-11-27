@@ -15,12 +15,12 @@ host='nc-data-eng-project-dw-prod.chpsczt8h1nu.eu-west-2.rds.amazonaws.com',
 port=5432
 
 tables = [
-    # 'dim_date',
-    # 'dim_location', 
-    # 'dim_design',
-    # 'dim_currency',
-    # 'dim_counterparty',
-    # 'dim_staff', 
+    'dim_date',
+    'dim_location', 
+    'dim_design',
+    'dim_currency',
+    'dim_counterparty',
+    'dim_staff', 
     'fact_sales_order'
 ]
 
@@ -41,7 +41,8 @@ def get_latest_s3_keys(bucket,s3_client, table_name):
     all_objects = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     all_key_timestamps = [item['Key'][-34:-8] for item in all_objects['Contents']]
     latest_timestamp = sorted(all_key_timestamps, reverse=True)[0]
-    return latest_timestamp
+    previous_timestamp = sorted(all_key_timestamps, reverse=True)[1]
+    return [latest_timestamp, previous_timestamp]
 
 def fetch_from_s3(bucket, key,s3 ):
     response = s3.get_object(Bucket=bucket, Key=key)
@@ -59,24 +60,23 @@ def lambda_handler(event, context):
     bucket = 'processed-bucket-neural-normalisers'
 
     for table in tables:
-        timestamp = get_latest_s3_keys(bucket, s3, table)
-        key = f'processed_data/{table}/{timestamp}.parquet'
-        print(key)
-        parquet_df = fetch_from_s3(bucket, key, s3)
+        print(f'processing: {table}')
+        conn = connect_to_db()
+        has_row = conn.run(f'select exists(select * from {table}) as has_row')[0][0]
+        latest_timestamp = get_latest_s3_keys(bucket, s3, table)[0]
+        latest_key = f'processed_data/{table}/{latest_timestamp}.parquet'
+        latest_df = fetch_from_s3(bucket, latest_key, s3)
+        print(latest_key)
+        previous_timestamp = get_latest_s3_keys(bucket, s3, table)[1]
+        previous_key = f'processed_data/{table}/{previous_timestamp}.parquet'
+        previous_df = fetch_from_s3(bucket, previous_key, s3)
+        print(previous_key)
+        
+        # # print(latest_df)
+        # latest_df.loc[2, 'design_id'] = 7
 
-        database_df = pd.read_sql(f'SELECT * FROM {table};', con=engine)
-
-        database_df['created_date'] = pd.to_datetime(database_df['created_date'], format='%y%m%d')
-        database_df['last_updated_date'] = pd.to_datetime(database_df['last_updated_date'], format='%y%m%d')
-        database_df['agreed_payment_date'] = pd.to_datetime(database_df['agreed_payment_date'], format='%y%m%d')
-        database_df['agreed_delivery_date'] = pd.to_datetime(database_df['agreed_delivery_date'], format='%y%m%d')
-
-        # print(database_df)
-        parquet_df.loc[2, 'design_id'] = 7
-        # print(parquet_df)
-        # print(parquet_df)
-        # parquet_df.loc[len(parquet_df)] = {'sales_record_id': 11361,
-        #                            'sales_order_id': 11361,
+        # latest_df.loc[len(latest_df)] = {'sales_record_id': 11371,
+        #                            'sales_order_id': 11371,
         #                            'created_date': pd.Timestamp('2024-11-21 00:00:00'),
         #                            'created_time': datetime.time(18, 22, 10, 134000),
         #                            'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
@@ -90,54 +90,26 @@ def lambda_handler(event, context):
         #                            'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
         #                            'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
         #                            'agreed_delivery_location_id': 2}
-        #check for modifications
 
-        # to_upload_df = pd.DataFrame()
-        frames = []
-        # # .query('_merge == "left_only"').drop('_merge', axis=1)
+        if not has_row:
+            print(f'{table} populated')
+            latest_df.to_sql(table, engine, if_exists='append', index=False)
+        else:
+            if table == 'fact_sales_order':
 
-        # print(database_df.iloc[5501:5507])
-        # print(parquet_df.iloc[5501:5507])
+                df_diff = pd.merge(latest_df, previous_df, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+                
+                last_id = pd.read_sql(f'SELECT sales_record_id FROM {table} ORDER BY sales_record_id DESC LIMIT 1;', con=engine)
+                last_id = last_id['sales_record_id'].values[0]
 
+                df_diff['sales_record_id'] = (list(pd.RangeIndex(start=last_id+1, stop=(last_id+1)+len(df_diff))))
+              
+            else:
+                if len(latest_df) > len(previous_df):
+                    diff = len(latest_df) > len(previous_df)
+                    added_records = latest_df[-diff:]
+                    added_records.to_sql(table, engine, if_exists='append', index=False)
 
-        if len(parquet_df) > len(database_df):
-            diff = len(parquet_df) > len(database_df)
-            added_records = parquet_df[-diff:]
-            frames.append(added_records)
-            print('records added')
-        # else:
-        if table == 'fact_sales_order':
-            df_diff = pd.merge(parquet_df, database_df, how='outer', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
-            # df_diff = df_diff.drop(columns=['sales_record_id'])
-            df_diff['sales_record_id'] = (list(pd.RangeIndex(start=len(database_df)+2, stop=len(database_df)+len(df_diff)+2)))
-            
-            # print(df_diff, '<-------- difference')
-            # print('new line')
-            frames.append(df_diff)
-            
-            print('differences detected')
-
-        if frames:
-            to_upload_df = pd.concat(frames)
-
-
-
-
-        # print(parquet_df)
-        # print(database_df)
-
-        # print(to_upload_df)
-
-        # include_index = False
-        # if table == 'dim_date':
-        #     include_index = True
-        # df_diff.reset_index(drop=True)
-        # print(df_diff)
-            to_upload_df.to_sql(table, engine, if_exists='append', index=False)
-        # try:
-        #     to_upload_df.to_sql(table, engine, if_exists='append', index=False)
-        # except:
-        #     print('sql error encountered')
 
 lambda_handler(None, None)
 
