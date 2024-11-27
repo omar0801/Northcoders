@@ -1,18 +1,4 @@
-# The Data Engineering Project
-
-**Read this document carefully - it contains (almost) all you need to know about the project!**
-
-## Objective
-
-The project phase is intended to allow you to showcase some of the skills and knowledge you have acquired over the past few weeks. You will create applications that will Extract, Transform, and Load data from a prepared source into a data lake and warehouse hosted in AWS. Your solution should be reliable, resilient, and (as far as possible) deployed and managed in code.
-
-By the end of the project, you should have:
-- written some applications in Python that interact with AWS and database infrastructure and manipulate data as required
-- remodelled data into a data warehouse hosted in AWS
-- demonstrated that your project is well-monitored and that you can measure its performance
-- deployed at least part of the project using scripting or automation.
-
-Your solution should showcase your knowledge of Python, SQL, database modelling, AWS, good operational practices, and Agile working.
+# The Data Engineering Project - Neural Normalisers
 
 ## The Minimum Viable Product (MVP)
 
@@ -46,8 +32,6 @@ Each project team will be given read-only access credentials to this database. T
 
 In addition, you will be given credentials for a data warehouse hosted in the Northcoders AWS account. The data will have to be remodelled for this warehouse into three overlapping star schemas. You can find the ERDs for these star schemas:
  - ["Sales" schema](https://dbdiagram.io/d/637a423fc9abfc611173f637)
- - ["Purchases" schema](https://dbdiagram.io/d/637b3e8bc9abfc61117419ee)
- - ["Payments" schema](https://dbdiagram.io/d/637b41a5c9abfc6111741ae8)
 
 The overall structure of the resulting data warehouse is shown [here](https://dbdiagram.io/d/63a19c5399cb1f3b55a27eca).
 
@@ -65,21 +49,6 @@ The tables to be ingested from `totesys` are:
 |purchase_order|
 |payment_type|
 |transaction|
-
-The list of tables in the complete warehouse is:
-|tablename|
-|---------|
-|fact_sales_order|
-|fact_purchase_orders|
-|fact_payment|
-|dim_transaction|
-|dim_staff|
-|dim_payment_type|
-|dim_location|
-|dim_design|
-|dim_date|
-|dim_currency|
-|dim_counterparty|
 
 However, for your minimum viable product, you need only populate the following:
 |tablename|
@@ -109,31 +78,9 @@ It is _not_ necessary to do this for dimensions (which should not change very mu
 should just have the latest version of the dimension values. However, you might want to keep a full
 record of changes to dimensions in the S3 buckets.
 
-
-## Visualisation
-To demonstrate the use of the warehouse, you will be required to display some of the data in an application
-that can read data in real-time from the warehouse. Examples of such applications could be:
-- a BI dashboard, such as [AWS Quicksight](https://aws.amazon.com/quicksight/). Alternatives include the
-  free tiers of well-known tools such as [Power BI](https://www.microsoft.com/en-gb/power-platform/products/power-bi)
-  or [Tableau](https://www.tableau.com/en-gb). There is also the open-source [Superset](https://superset.apache.org/)
-  tool. _Northcoders tutors can help you with the setup and configuration of Quicksight but if you choose to
-  use any other tool, you must take responsibility for setting it up yourself._ 
-- a Jupyter notebook containing graphical elements from a library such as [matplotlib](https://matplotlib.org/)
-  or [Seaborn](https://seaborn.pydata.org/)
-- a [Shiny app](https://shiny.posit.co/) or [Steamlit](https://streamlit.io/) front-end.
-
-This aspect of the project should not be tackled until the final week of the course, more details will be given then. The major focus of your efforts should be to get the data into the data warehouse.
-
-![img](./mvp.png)
-
-
 ## Technical Details
 
-To host your solution, each team will need to host your infrastructure in a single AWS account. You can use one
-of your Northcoders accounts and give each member of your team credentials to access this. You will probably
-need to deploy the infrastructure several times before it is correct, 
-so it is in your interest to ensure that you can automate the creation of the resources so that they can be
-rebuilt as quickly and efficiently as possible.
+
 
 
 ### Required Components
@@ -149,23 +96,3 @@ do this with AWS Eventbridge or with a combination of Eventbridge and AWS Step F
 1. A Python application that will periodically schedule an update of the data warehouse from the data in S3. Again, status and errors should be logged to Cloudwatch, and an alert triggered if a serious error occurs.
 1. **In the final week of the course**, you should be asked to create a simple visualisation such as
   described above. In practice, this will mean creating SQL queries to answer common business questions. Depending on the complexity of your visualisation tool, other coding may be required too.
-
-## Possible Extensions
-
-If you have time, you can enhance the MVP. **The initial focus for any enhancement should be to ensure that all
-of the tables in the data warehouse are being updated**. 
-
-There are several ways to extend the scope of the project. 
-1. Ingest data from an external API - eg you could retrieve relevant daily foreign exchange rates from `https://github.com/fawazahmed0/exchange-api`. You can use the `requests` library to make the request and then save the results in S3.
-1. Ingest data from a file source - eg another S3 bucket. We can provide JSON files in a remote S3 bucket that
-  can be fetched at intervals.
-
-
-
-## Finally...
-
-This is a fairly realistic simulation of a typical data engineering project. In the real world, such a project would be undertaken over several weeks by a team of experienced data engineers. _It is highly unlikely that you will have time to complete a fully-functioning, "production-ready" solution._ However, you will have an opportunity to tackle lots of the typical problems faced in a real project and put your skills in Python, data, and DevOps to good use. As always, the journey is more important than the destination. 
-
-**Above all, don't rush**: it will be better to deliver a high-quality MVP than a more complex but poorly-engineered platform. 
-
-Enjoy this! And good luck!

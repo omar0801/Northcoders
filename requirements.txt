@@ -60,6 +60,7 @@ scramp==1.4.5
 setuptools==75.3.0
 six==1.16.0
 sympy==1.13.3
+SQLAlchemy
 typing_extensions==4.12.2
 urllib3==2.2.3
 Werkzeug==3.1.3

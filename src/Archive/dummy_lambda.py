@@ -29,9 +29,9 @@ def lambda_handler():
     conn = connect_to_db()
     # conn.run("UPDATE facts_sales_order SET units_sold = -1 WHERE day_name = 'Friday';")
     # empty_table = conn.run('DELETE FROM dim_date;')
-    empty_table = conn.run('SELECT * FROM fact_sales_order;')
-    columns_names = [col['name'] for col in conn.columns]
-    print(columns_names)
+    empty_table = conn.run('SELECT * FROM fact_sales_order ORDER BY sales_record_id DESC LIMIT 1 ;')
+    # columns_names = [col['name'] for col in conn.columns]
+    # print(columns_names)
 
     pprint(empty_table)
 

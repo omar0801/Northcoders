@@ -2,8 +2,6 @@
 import pg8000.native, json, pandas as pd, io, boto3
 from sqlalchemy import create_engine
 from pprint import pprint
-from src.fact_sales_order import create_fact_sales_order_table
-from src.process_data import get_latest_s3_keys, fetch_from_s3, create_dim_date
 from io import BytesIO
 
 user='project_team_11',

@@ -70,6 +70,27 @@ resource "aws_cloudwatch_metric_alarm" "lambda_2ErrorsCountAlarm" {
 
 }
 
+resource "aws_cloudwatch_metric_alarm" "lambda_3ErrorsCountAlarm" {
+  alarm_name                = "neural-normalisers-alarm-lambda-3"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 1
+  metric_name               = "Errors"
+  namespace                 = "AWS/Lambda" 
+  period                    = 10
+  statistic                 = "Sum"
+  threshold                 = 1
+  alarm_description         = "major error(s) alarm"
+  insufficient_data_actions = []
+  alarm_actions = [aws_sns_topic.errorsOverThresholdLimit.arn]
+  
+
+  dimensions = {
+
+    FunctionName = "populate_data_warehouse"
+  }
+
+}
+
 
 
 
