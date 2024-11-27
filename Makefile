@@ -50,6 +50,10 @@ safety:
 black:
 	$(call execute_in_env, $(PIP) install black)
 
+## Install coverage
+coverage:
+	$(call execute_in_env, $(PIP) install coverage)
+
 
 ## Set up dev requirements (bandit, safety, black)
 dev-setup: setupreq bandit safety black 
@@ -63,12 +67,13 @@ security-test:
 
 ## Run the black code check
 run-black:
-	$(call execute_in_env, black  ./src/*.py ./test/*.py) 
+	$(call execute_in_env, black  ./src/*.py ./test/*.py)
 
 
 ## Run the unit tests
 unit-test:
-	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} pytest -vv) 
+	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} coverage run --source=./src/ -m pytest -vv)
+	$(call execute_in_env, PYTHONPATH=${PYTHONPATH} coverage report)
 
 ## Run all checks
 run-checks: security-test run-black unit-test
