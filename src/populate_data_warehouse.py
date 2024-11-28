@@ -133,6 +133,3 @@ def lambda_handler(event, context):
                     added_records = latest_df[-diff:]
                     added_records.to_sql(table, engine, if_exists='append', index=False)
 
-
-if __name__ == '__main__':
-    lambda_handler(None, None)

@@ -446,33 +446,6 @@ class TestLambdaHandler():
                                    'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
                                    'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
                                    'agreed_delivery_location_id': 2}
-    @pytest.mark.skip
-    def test_check_fact_sales_deletion_changes_status_column(self, s3_mock_with_objects, mock_get_latest_s3_keys, mock_fetch_from_s3, datetime_mock):
-        s3_mock_with_objects.put_object(Bucket='processed-bucket-neural-normalisers',
-                                        Key='processed_data/facts_sales/2timestamp.parquet')
-        lambda_handler(None, None)
-
-        obj = s3_mock_with_objects.get_object(Bucket='processed-bucket-neural-normalisers',
-            Key='processed_data/facts_sales/mock_timestamp.parquet')
-        
-        df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
-        first_row = df.loc[0]
-        assert first_row.to_dict() == {'sales_record_id': 1,
-                                   'sales_order_id': 11293,
-                                   'created_date': pd.Timestamp('2024-11-21 00:00:00'),
-                                   'created_time': datetime.time(18, 22, 10, 134000),
-                                   'last_updated_date': pd.Timestamp('2024-11-21 00:00:00'),
-                                   'last_updated_time': datetime.time(18, 22, 10, 134000),
-                                   'sales_staff_id': 13,
-                                   'counterparty_id': 14,
-                                   'units_sold': 41794,
-                                   'unit_price': 2.08,
-                                   'currency_id': 2,
-                                   'design_id': 325,
-                                   'agreed_payment_date': pd.Timestamp('2024-11-26 00:00:00'),
-                                   'agreed_delivery_date': pd.Timestamp('2024-11-24 00:00:00'),
-                                   'agreed_delivery_location_id': 2,
-                                   'status': 'deleted'}
     
 @pytest.fixture()
 def s3_mock():
